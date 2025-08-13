@@ -56,14 +56,18 @@ class TodosTest < ApplicationSystemTestCase
   test "should toggle todo completion" do
     visit todos_url
 
+    # Verify todo starts as incomplete
     within "#todo_#{@todo.id}" do
-      assert_no_selector ".completed"
+      assert_no_selector ".todo-item.completed"
+    end
+
+    # Click the checkbox to toggle completion
+    within "#todo_#{@todo.id}" do
       find(".checkbox-btn").click
     end
 
-    within "#todo_#{@todo.id}" do
-      assert_selector ".completed"
-    end
+    # Wait for page to reload and verify todo is now completed
+    assert_selector "#todo_#{@todo.id}.completed"
   end
 
   test "should show empty state when no todos" do
