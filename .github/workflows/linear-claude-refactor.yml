@@ -205,6 +205,15 @@ jobs:
           git commit -m "Add refactoring instructions for Linear issue ${{ steps.parse.outputs.issue_id }}"
           git push origin ${{ steps.branch.outputs.branch_name }}
       
+      - name: Create or verify labels
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          # Create labels if they don't exist
+          gh label create "refactoring" --description "Code refactoring" --color "0E8A16" 2>/dev/null || true
+          gh label create "linear-integration" --description "Created from Linear issue" --color "5319E7" 2>/dev/null || true
+          gh label create "needs-claude" --description "Requires Claude Code refactoring" --color "FBCA04" 2>/dev/null || true
+      
       - name: Create pull request
         env:
           GITHUB_TOKEN: ${{ github.token }}
