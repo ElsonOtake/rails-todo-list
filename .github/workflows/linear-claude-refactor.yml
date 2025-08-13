@@ -1,0 +1,294 @@
+name: Linear to Claude Code Refactoring
+
+on:
+  workflow_dispatch:
+    inputs:
+      linear_issue_id:
+        description: 'Linear Issue ID'
+        required: true
+        type: string
+  schedule:
+    # Check for new Linear issues every hour
+    - cron: '0 * * * *'
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/linear-claude-refactor.yml'
+
+jobs:
+  check-linear-issues:
+    runs-on: ubuntu-latest
+    outputs:
+      should_refactor: ${{ steps.check.outputs.should_refactor }}
+      issue_details: ${{ steps.check.outputs.issue_details }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check Linear for "ready for Claude" tag
+        id: check
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: |
+          # Query Linear API for issues with "ready for Claude" tag
+          RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { issues(filter: { labels: { name: { eq: \"ready for Claude\" } }, state: { name: { neq: \"Done\" } } }) { nodes { id identifier title description state { name } labels { nodes { name } } } } }"
+            }')
+          
+          # Check if there are any issues to process
+          ISSUE_COUNT=$(echo $RESPONSE | jq '.data.issues.nodes | length')
+          
+          if [ "$ISSUE_COUNT" -gt "0" ]; then
+            echo "should_refactor=true" >> $GITHUB_OUTPUT
+            echo "issue_details<<EOF" >> $GITHUB_OUTPUT
+            echo $RESPONSE | jq '.data.issues.nodes[0]' >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "should_refactor=false" >> $GITHUB_OUTPUT
+          fi
+
+  prepare-refactoring:
+    needs: check-linear-issues
+    if: needs.check-linear-issues.outputs.should_refactor == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Parse Linear issue details
+        id: parse
+        run: |
+          echo "Issue details:"
+          echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq '.'
+          
+          # Extract issue details
+          ISSUE_ID=$(echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq -r '.identifier')
+          ISSUE_TITLE=$(echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq -r '.title')
+          ISSUE_DESC=$(echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq -r '.description // "No description provided"')
+          
+          echo "issue_id=$ISSUE_ID" >> $GITHUB_OUTPUT
+          echo "issue_title=$ISSUE_TITLE" >> $GITHUB_OUTPUT
+          echo "issue_description<<EOF" >> $GITHUB_OUTPUT
+          echo "$ISSUE_DESC" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create refactoring branch
+        id: branch
+        run: |
+          BRANCH_NAME="refactor/linear-${{ steps.parse.outputs.issue_id }}-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BRANCH_NAME
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Generate refactoring instructions
+        id: instructions
+        run: |
+          cat > refactoring-instructions.md << 'EOF'
+          # Refactoring Task from Linear Issue ${{ steps.parse.outputs.issue_id }}
+          
+          ## Issue Title
+          ${{ steps.parse.outputs.issue_title }}
+          
+          ## Description
+          ${{ steps.parse.outputs.issue_description }}
+          
+          ## Refactoring Guidelines
+          
+          1. **Code Quality Improvements**
+             - Identify and eliminate code duplication
+             - Extract complex logic into well-named methods
+             - Improve variable and method naming for clarity
+             - Apply SOLID principles where applicable
+          
+          2. **Performance Optimizations**
+             - Optimize database queries (N+1 query prevention)
+             - Add appropriate indexes
+             - Implement caching where beneficial
+             - Reduce memory allocation in hot paths
+          
+          3. **Rails Best Practices**
+             - Use Rails conventions and idioms
+             - Leverage ActiveRecord scopes and callbacks appropriately
+             - Implement proper error handling
+             - Add data validations where missing
+          
+          4. **Testing**
+             - Ensure all changes maintain or improve test coverage
+             - Add tests for any new functionality
+             - Refactor test code for better maintainability
+          
+          5. **Documentation**
+             - Update code comments where necessary
+             - Document complex business logic
+             - Update CLAUDE.md if architecture changes
+          
+          ## Files to Focus On
+          Based on the issue description, prioritize refactoring in these areas:
+          - Models with complex business logic
+          - Controllers with multiple responsibilities
+          - Views with excessive logic
+          - JavaScript controllers that could be simplified
+          
+          ## Success Criteria
+          - All existing tests pass
+          - Code follows Rails conventions
+          - Improved readability and maintainability
+          - No performance regressions
+          
+          ---
+          Generated at: $(date)
+          Linear Issue: https://linear.app/issue/${{ steps.parse.outputs.issue_id }}
+          EOF
+          
+          echo "Instructions file created"
+      
+      - name: Create Claude Code task file
+        run: |
+          cat > .claude-task.json << 'EOF'
+          {
+            "task": "refactor",
+            "linear_issue": "${{ steps.parse.outputs.issue_id }}",
+            "title": "${{ steps.parse.outputs.issue_title }}",
+            "description": "${{ steps.parse.outputs.issue_description }}",
+            "branch": "${{ steps.branch.outputs.branch_name }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "guidelines": {
+              "focus_areas": [
+                "code_quality",
+                "performance",
+                "rails_best_practices",
+                "testing",
+                "documentation"
+              ],
+              "constraints": [
+                "maintain_backward_compatibility",
+                "preserve_existing_tests",
+                "follow_rubocop_rules"
+              ]
+            },
+            "automated": true
+          }
+          EOF
+      
+      - name: Commit task files
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add refactoring-instructions.md .claude-task.json
+          git commit -m "Add refactoring instructions for Linear issue ${{ steps.parse.outputs.issue_id }}"
+          git push origin ${{ steps.branch.outputs.branch_name }}
+      
+      - name: Create pull request
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --title "Refactor: ${{ steps.parse.outputs.issue_title }} (Linear: ${{ steps.parse.outputs.issue_id }})" \
+            --body "## Automated Refactoring Request
+
+          This PR was automatically created from Linear issue **${{ steps.parse.outputs.issue_id }}**
+          
+          ### Issue Details
+          **Title:** ${{ steps.parse.outputs.issue_title }}
+          
+          **Description:**
+          ${{ steps.parse.outputs.issue_description }}
+          
+          ### Next Steps
+          1. Review the refactoring instructions in \`refactoring-instructions.md\`
+          2. Use Claude Code to perform the refactoring
+          3. Run tests to ensure everything works
+          4. Update this PR with the refactored code
+          
+          ### Linear Integration
+          - Issue: https://linear.app/issue/${{ steps.parse.outputs.issue_id }}
+          - Tagged with: \`ready for Claude\`
+          
+          ---
+          *This PR requires manual refactoring using Claude Code. The instructions have been prepared automatically.*" \
+            --head ${{ steps.branch.outputs.branch_name }} \
+            --base main \
+            --label "refactoring" \
+            --label "linear-integration" \
+            --label "needs-claude"
+      
+      - name: Update Linear issue
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: |
+          # Get the Linear issue's internal ID
+          INTERNAL_ID=$(echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq -r '.id')
+          
+          # Update the issue to remove "ready for Claude" and add "in-progress" label
+          curl -X POST https://api.linear.app/graphql \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { issueUpdate(id: \\\"$INTERNAL_ID\\\", input: { labelIds: [] }) { success } }\"
+            }"
+          
+          # Add a comment to the Linear issue
+          curl -X POST https://api.linear.app/graphql \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 Refactoring workflow initiated\\\\n\\\\nA GitHub PR has been created for this refactoring task. The PR includes detailed instructions for Claude Code.\\\\n\\\\nBranch: \`${{ steps.branch.outputs.branch_name }}\`\\\" }) { success } }\"
+            }"
+
+  notify-slack:
+    needs: [check-linear-issues, prepare-refactoring]
+    if: needs.check-linear-issues.outputs.should_refactor == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Send Slack notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🔄 Refactoring workflow started",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Refactoring Workflow Initiated*\nA Linear issue with `ready for Claude` tag has been detected and processed."
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\nPR Created"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View on GitHub"
+                      },
+                      "url": "https://github.com/${{ github.repository }}/pulls"
+                    }
+                  ]
+                }
+              ]
+            }'
