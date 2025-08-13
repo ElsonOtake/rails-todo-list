@@ -17,11 +17,11 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
 
   test "should create todo" do
     assert_difference("Todo.count") do
-      post todos_url, params: { todo: { 
-        title: "New Todo", 
-        description: "Test description", 
-        priority: "low", 
-        completed: false 
+      post todos_url, params: { todo: {
+        title: "New Todo",
+        description: "Test description",
+        priority: "low",
+        completed: false
       } }
     end
 
@@ -34,7 +34,7 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update todo" do
-    patch todo_url(@todo), params: { todo: { 
+    patch todo_url(@todo), params: { todo: {
       title: "Updated Title",
       description: @todo.description,
       priority: @todo.priority,
@@ -53,9 +53,9 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
 
   test "should toggle todo completion" do
     assert_not @todo.completed?
-    
+
     patch toggle_todo_url(@todo)
-    
+
     @todo.reload
     assert @todo.completed?
     assert_redirected_to todos_url

@@ -12,7 +12,7 @@ class TodosController < ApplicationController
 
   def create
     @todo = Todo.new(todo_params)
-    
+
     if @todo.save
       redirect_to todos_path, notice: "Todo was successfully created."
     else
@@ -38,7 +38,7 @@ class TodosController < ApplicationController
 
   def toggle
     @todo.toggle_completed!
-    
+
     respond_to do |format|
       format.html { redirect_to todos_path }
       format.turbo_stream
