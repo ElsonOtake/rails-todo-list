@@ -15,6 +15,11 @@ on:
     paths:
       - '.github/workflows/linear-claude-refactor.yml'
 
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
 jobs:
   check-linear-issues:
     runs-on: ubuntu-latest
@@ -75,7 +80,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ github.token }}
+          fetch-depth: 0
       
       - name: Parse Linear issue details
         id: parse
@@ -193,15 +199,15 @@ jobs:
       
       - name: Commit task files
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
           git add refactoring-instructions.md .claude-task.json
           git commit -m "Add refactoring instructions for Linear issue ${{ steps.parse.outputs.issue_id }}"
           git push origin ${{ steps.branch.outputs.branch_name }}
       
       - name: Create pull request
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           gh pr create \
             --title "Refactor: ${{ steps.parse.outputs.issue_title }} (Linear: ${{ steps.parse.outputs.issue_id }})" \
