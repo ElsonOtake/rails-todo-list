@@ -1,0 +1,49 @@
+{
+  "task": "refactor",
+  "linear_issue": "HLX-580",
+  "title": "## 📋 Feature Request Test (AI Project - n8n - Claude Code)",
+  "description": "```
+## 📋 Feature Request
+
+### Description
+Add user authentication with JWT tokens to the API
+
+### Requirements
+- [ ] User registration endpoint
+- [ ] User login endpoint  
+- [ ] JWT token generation
+- [ ] Protected route middleware
+- [ ] Password hashing
+
+### Technical Details
+- **Component**: Backend
+- **Priority**: High
+- **Estimated Complexity**: Medium
+
+### Acceptance Criteria
+- [ ] Users can register with email/password
+- [ ] Users can login and receive JWT token
+- [ ] Protected routes require valid JWT
+- [ ] Passwords are properly hashed
+
+###
+**Labels**: `feature`, `backend`, `ready-for-claude`
+```",
+  "branch": "refactor/linear-HLX-580-20250813-201703",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "guidelines": {
+    "focus_areas": [
+      "code_quality",
+      "performance",
+      "rails_best_practices",
+      "testing",
+      "documentation"
+    ],
+    "constraints": [
+      "maintain_backward_compatibility",
+      "preserve_existing_tests",
+      "follow_rubocop_rules"
+    ]
+  },
+  "automated": true
+}
