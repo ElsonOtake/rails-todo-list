@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
     inputs:
       linear_issue_id:
-        description: 'Linear Issue ID'
-        required: true
+        description: 'Linear Issue ID (optional - leave empty to scan for issues with "Ready for Claude" label)'
+        required: false
         type: string
   schedule:
     # Check for new Linear issues every hour
