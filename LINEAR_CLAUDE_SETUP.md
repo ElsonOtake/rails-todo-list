@@ -22,7 +22,7 @@ SLACK_WEBHOOK_URL=https://hooks.slack.com/services/xxx (optional)
 
 In Linear:
 1. Go to Settings → Labels
-2. Create label: `ready for Claude`
+2. Create label: `Ready for Claude` (case-sensitive!)
 3. Use a distinctive color (recommended: purple 💜)
 
 ### Step 3: Test the Integration
@@ -36,7 +36,7 @@ In Linear:
    - Add proper indexing
    - Implement caching
    
-   Label: ready for Claude
+   Label: Ready for Claude
    ```
 
 2. The workflow will:

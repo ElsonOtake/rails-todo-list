@@ -26,26 +26,41 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       
-      - name: Check Linear for "ready for Claude" tag
+      - name: Check Linear for "Ready for Claude" tag
         id: check
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
         run: |
-          # Query Linear API for issues with "ready for Claude" tag
+          # Check if LINEAR_API_KEY is set
+          if [ -z "$LINEAR_API_KEY" ]; then
+            echo "LINEAR_API_KEY is not set. Skipping Linear check."
+            echo "should_refactor=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Query Linear API for issues with "Ready for Claude" tag
           RESPONSE=$(curl -s -X POST https://api.linear.app/graphql \
             -H "Authorization: $LINEAR_API_KEY" \
             -H "Content-Type: application/json" \
             -d '{
-              "query": "query { issues(filter: { labels: { name: { eq: \"ready for Claude\" } }, state: { name: { neq: \"Done\" } } }) { nodes { id identifier title description state { name } labels { nodes { name } } } } }"
+              "query": "query { issues(filter: { labels: { name: { eq: \"Ready for Claude\" } }, state: { name: { neq: \"Done\" } } }) { nodes { id identifier title description state { name } labels { nodes { name } } } } }"
             }')
           
+          # Check if the response is valid
+          if ! echo "$RESPONSE" | jq -e '.data' > /dev/null 2>&1; then
+            echo "Invalid response from Linear API. Check your API key."
+            echo "Response: $RESPONSE"
+            echo "should_refactor=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
           # Check if there are any issues to process
-          ISSUE_COUNT=$(echo $RESPONSE | jq '.data.issues.nodes | length')
+          ISSUE_COUNT=$(echo "$RESPONSE" | jq '.data.issues.nodes | length')
           
           if [ "$ISSUE_COUNT" -gt "0" ]; then
             echo "should_refactor=true" >> $GITHUB_OUTPUT
             echo "issue_details<<EOF" >> $GITHUB_OUTPUT
-            echo $RESPONSE | jq '.data.issues.nodes[0]' >> $GITHUB_OUTPUT
+            echo "$RESPONSE" | jq '.data.issues.nodes[0]' >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
           else
             echo "should_refactor=false" >> $GITHUB_OUTPUT
@@ -208,7 +223,7 @@ jobs:
           
           ### Linear Integration
           - Issue: https://linear.app/issue/${{ steps.parse.outputs.issue_id }}
-          - Tagged with: \`ready for Claude\`
+          - Tagged with: \`Ready for Claude\`
           
           ---
           *This PR requires manual refactoring using Claude Code. The instructions have been prepared automatically.*" \
@@ -225,7 +240,7 @@ jobs:
           # Get the Linear issue's internal ID
           INTERNAL_ID=$(echo '${{ needs.check-linear-issues.outputs.issue_details }}' | jq -r '.id')
           
-          # Update the issue to remove "ready for Claude" and add "in-progress" label
+          # Update the issue to remove "Ready for Claude" and add "in-progress" label
           curl -X POST https://api.linear.app/graphql \
             -H "Authorization: $LINEAR_API_KEY" \
             -H "Content-Type: application/json" \
@@ -261,7 +276,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Refactoring Workflow Initiated*\nA Linear issue with `ready for Claude` tag has been detected and processed."
+                    "text": "*Refactoring Workflow Initiated*\nA Linear issue with `Ready for Claude` tag has been detected and processed."
                   }
                 },
                 {
