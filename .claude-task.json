@@ -1,0 +1,47 @@
+{
+  "task": "refactor",
+  "linear_issue": "HLX-581",
+  "title": "Bug Report (AI Tests - n8n- Claude Code)",
+  "description": "```
+## 🐛 Bug Report
+
+### Current Behavior
+What is currently happening?
+
+### Expected Behavior
+What should happen instead?
+
+### Steps to Reproduce
+1. Step 1
+2. Step 2
+3. Step 3
+
+### Technical Details
+- **Component**: [Frontend/Backend/Database/API]
+- **Browser/Environment**: 
+- **Priority**: [Critical/High/Medium/Low]
+
+### Proposed Solution
+Technical approach to fix the issue
+
+###
+**Labels**: `bug`, `needs-fix`
+```",
+  "branch": "refactor/linear-HLX-581-20250813-201251",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "guidelines": {
+    "focus_areas": [
+      "code_quality",
+      "performance",
+      "rails_best_practices",
+      "testing",
+      "documentation"
+    ],
+    "constraints": [
+      "maintain_backward_compatibility",
+      "preserve_existing_tests",
+      "follow_rubocop_rules"
+    ]
+  },
+  "automated": true
+}
