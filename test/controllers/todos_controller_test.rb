@@ -1,38 +1,69 @@
 require "test_helper"
 
 class TodosControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    @todo = todos(:one)
+  end
+
   test "should get index" do
-    get todos_index_url
+    get todos_url
     assert_response :success
   end
 
   test "should get new" do
-    get todos_new_url
+    get new_todo_url
     assert_response :success
   end
 
-  test "should get create" do
-    get todos_create_url
-    assert_response :success
+  test "should create todo" do
+    assert_difference("Todo.count") do
+      post todos_url, params: { todo: { 
+        title: "New Todo", 
+        description: "Test description", 
+        priority: "low", 
+        completed: false 
+      } }
+    end
+
+    assert_redirected_to todos_url
   end
 
   test "should get edit" do
-    get todos_edit_url
+    get edit_todo_url(@todo)
     assert_response :success
   end
 
-  test "should get update" do
-    get todos_update_url
-    assert_response :success
+  test "should update todo" do
+    patch todo_url(@todo), params: { todo: { 
+      title: "Updated Title",
+      description: @todo.description,
+      priority: @todo.priority,
+      completed: @todo.completed
+    } }
+    assert_redirected_to todos_url
   end
 
-  test "should get destroy" do
-    get todos_destroy_url
-    assert_response :success
+  test "should destroy todo" do
+    assert_difference("Todo.count", -1) do
+      delete todo_url(@todo)
+    end
+
+    assert_redirected_to todos_url
   end
 
-  test "should get toggle" do
-    get todos_toggle_url
+  test "should toggle todo completion" do
+    assert_not @todo.completed?
+    
+    patch toggle_todo_url(@todo)
+    
+    @todo.reload
+    assert @todo.completed?
+    assert_redirected_to todos_url
+  end
+
+  test "should handle toggle with turbo stream" do
+    patch toggle_todo_url(@todo), as: :turbo_stream
     assert_response :success
+    assert_match "turbo-stream", @response.media_type
   end
 end

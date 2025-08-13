@@ -1,15 +1,29 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  title: MyString
-  description: MyText
+  title: Complete project documentation
+  description: Write comprehensive documentation for the Rails todo app
   completed: false
-  priority: 1
-  due_date: 2025-08-13 15:08:08
+  priority: 2
+  due_date: <%= 2.days.from_now %>
 
 two:
-  title: MyString
-  description: MyText
+  title: Fix bug in authentication
+  description: Users are experiencing login issues
   completed: false
   priority: 1
-  due_date: 2025-08-13 15:08:08
+  due_date: <%= 1.day.from_now %>
+
+completed:
+  title: Set up development environment
+  description: Install Ruby, Rails, and PostgreSQL
+  completed: true
+  priority: 0
+  due_date: <%= 1.week.ago %>
+
+overdue:
+  title: Review code changes
+  description: Review pull requests from team members
+  completed: false
+  priority: 1
+  due_date: <%= 2.days.ago %>
