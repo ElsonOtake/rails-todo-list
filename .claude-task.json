@@ -1,0 +1,34 @@
+{
+  "task": "refactor",
+  "linear_issue": "HLX-601",
+  "title": "Testes de IA. Criação de cartão teste no Linear. Descartar após o uso.",
+  "description": "Title: Improvements for the ToDoList app
+
+Description:
+
+Improvements:
+
+* Create tests covering edge cases for the todo model
+* Create a descriptive Readme
+
+Success criteria:
+
+* All tests passed",
+  "branch": "refactor/linear-HLX-601-20250813-193840",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "guidelines": {
+    "focus_areas": [
+      "code_quality",
+      "performance",
+      "rails_best_practices",
+      "testing",
+      "documentation"
+    ],
+    "constraints": [
+      "maintain_backward_compatibility",
+      "preserve_existing_tests",
+      "follow_rubocop_rules"
+    ]
+  },
+  "automated": true
+}
