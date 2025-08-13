@@ -43,7 +43,7 @@ In Linear:
    - Detect the issue (runs hourly or on manual trigger)
    - Create a new branch
    - Generate refactoring instructions
-   - Open a PR with details
+   - Create a GitHub issue with PR creation instructions
 
 3. In Claude Code:
    - Pull the branch

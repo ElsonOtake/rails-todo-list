@@ -214,15 +214,16 @@ jobs:
           gh label create "linear-integration" --description "Created from Linear issue" --color "5319E7" 2>/dev/null || true
           gh label create "needs-claude" --description "Requires Claude Code refactoring" --color "FBCA04" 2>/dev/null || true
       
-      - name: Create pull request
+      - name: Create issue for refactoring task
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          gh pr create \
+          # Create an issue with instructions for creating the PR
+          ISSUE_URL=$(gh issue create \
             --title "Refactor: ${{ steps.parse.outputs.issue_title }} (Linear: ${{ steps.parse.outputs.issue_id }})" \
             --body "## Automated Refactoring Request
 
-          This PR was automatically created from Linear issue **${{ steps.parse.outputs.issue_id }}**
+          This issue was automatically created from Linear issue **${{ steps.parse.outputs.issue_id }}**
           
           ### Issue Details
           **Title:** ${{ steps.parse.outputs.issue_title }}
@@ -230,23 +231,51 @@ jobs:
           **Description:**
           ${{ steps.parse.outputs.issue_description }}
           
+          ### Branch Created
+          A new branch has been created with refactoring instructions:
+          - Branch: \`${{ steps.branch.outputs.branch_name }}\`
+          - Files added:
+            - \`refactoring-instructions.md\` - Detailed refactoring guidelines
+            - \`.claude-task.json\` - Structured task data for Claude Code
+          
           ### Next Steps
-          1. Review the refactoring instructions in \`refactoring-instructions.md\`
-          2. Use Claude Code to perform the refactoring
-          3. Run tests to ensure everything works
-          4. Update this PR with the refactored code
+          1. **Create a Pull Request manually:**
+             \`\`\`bash
+             gh pr create \\
+               --title \"Refactor: ${{ steps.parse.outputs.issue_title }} (Linear: ${{ steps.parse.outputs.issue_id }})\" \\
+               --body \"See issue #<issue_number> for details\" \\
+               --head ${{ steps.branch.outputs.branch_name }} \\
+               --base main \\
+               --label refactoring \\
+               --label linear-integration \\
+               --label needs-claude
+             \`\`\`
+          
+          2. **Checkout the branch locally:**
+             \`\`\`bash
+             git fetch origin
+             git checkout ${{ steps.branch.outputs.branch_name }}
+             \`\`\`
+          
+          3. **Use Claude Code to perform the refactoring:**
+             - Review \`refactoring-instructions.md\`
+             - Make the necessary code changes
+             - Run tests to ensure everything works
+          
+          4. **Push changes and update the PR**
           
           ### Linear Integration
           - Issue: https://linear.app/issue/${{ steps.parse.outputs.issue_id }}
           - Tagged with: \`Ready for Claude\`
           
           ---
-          *This PR requires manual refactoring using Claude Code. The instructions have been prepared automatically.*" \
-            --head ${{ steps.branch.outputs.branch_name }} \
-            --base main \
+          *This issue requires manual PR creation and refactoring using Claude Code.*" \
             --label "refactoring" \
             --label "linear-integration" \
-            --label "needs-claude"
+            --label "needs-claude")
+          
+          echo "Issue created: $ISSUE_URL"
+          echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
       
       - name: Update Linear issue
         env:
@@ -268,7 +297,7 @@ jobs:
             -H "Authorization: $LINEAR_API_KEY" \
             -H "Content-Type: application/json" \
             -d "{
-              \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 Refactoring workflow initiated\\\\n\\\\nA GitHub PR has been created for this refactoring task. The PR includes detailed instructions for Claude Code.\\\\n\\\\nBranch: \`${{ steps.branch.outputs.branch_name }}\`\\\" }) { success } }\"
+              \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 Refactoring workflow initiated\\\\n\\\\nA GitHub issue has been created with instructions for this refactoring task.\\\\n\\\\nBranch: \`${{ steps.branch.outputs.branch_name }}\`\\\\n\\\\nFollow the instructions in the GitHub issue to create a PR and perform the refactoring.\\\" }) { success } }\"
             }"
 
   notify-slack:
