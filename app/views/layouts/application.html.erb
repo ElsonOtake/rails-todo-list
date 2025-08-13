@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Todo List - Organize Your Tasks" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
+    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <div class="min-h-screen bg-gradient">
+      <nav class="navbar">
+        <div class="container">
+          <div class="nav-content">
+            <%= link_to root_path, class: "logo" do %>
+              <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              <span class="logo-text">Todo List</span>
+            <% end %>
+            
+            <div class="nav-links">
+              <%= link_to "All Todos", todos_path, class: "nav-link" %>
+              <%= link_to new_todo_path, class: "btn-primary" do %>
+                <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                New Todo
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <main class="main-content">
+        <div class="container">
+          <% if notice.present? %>
+            <div class="alert alert-success" data-turbo-temporary>
+              <%= notice %>
+            </div>
+          <% end %>
+          
+          <% if alert.present? %>
+            <div class="alert alert-error" data-turbo-temporary>
+              <%= alert %>
+            </div>
+          <% end %>
+
+          <%= yield %>
+        </div>
+      </main>
+
+      <footer class="footer">
+        <div class="container">
+          <p>&copy; <%= Date.current.year %> Todo List App. Built with Rails & Love.</p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
