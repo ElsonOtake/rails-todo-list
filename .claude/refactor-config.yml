@@ -1,0 +1,66 @@
+# Claude Code Refactoring Configuration
+# This file helps Claude Code understand refactoring tasks
+
+version: 1.0
+
+# Automatic task detection
+auto_detect:
+  enabled: true
+  triggers:
+    - file_exists: .claude-task.json
+    - branch_pattern: refactor/linear-*
+
+# Refactoring preferences
+refactoring:
+  style:
+    follow_existing: true
+    use_rubocop: true
+    
+  focus_areas:
+    - performance:
+        priority: high
+        checks:
+          - n_plus_one_queries
+          - missing_indexes
+          - memory_leaks
+    
+    - code_quality:
+        priority: medium
+        checks:
+          - duplication
+          - complexity
+          - naming
+    
+    - testing:
+        priority: high
+        ensure:
+          - maintain_coverage
+          - add_missing_tests
+
+  constraints:
+    - preserve_public_api
+    - maintain_backwards_compatibility
+    - follow_rails_conventions
+
+# Automated actions
+actions:
+  on_open:
+    - show: refactoring-instructions.md
+    - analyze: current_code
+    - suggest: improvements
+  
+  on_complete:
+    - run: bin/rails test
+    - run: bin/rubocop
+    - commit: changes
+    - update: pull_request
+
+# Integration points
+integrations:
+  linear:
+    enabled: true
+    update_on_complete: true
+  
+  github:
+    auto_commit: false
+    require_tests_pass: true
