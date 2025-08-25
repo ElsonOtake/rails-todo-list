@@ -15,6 +15,8 @@ jobs:
   process-claude-ready:
     if: contains(github.event.client_payload.labels, 'Ready for Claude')
     runs-on: ubuntu-latest
+    outputs:
+      branch_name: ${{ steps.create-branch.outputs.branch_name }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -339,21 +341,59 @@ jobs:
     needs: [process-claude-ready]
     steps:
       - name: Update Linear issue
-        if: env.LINEAR_API_KEY != ''
+        if: ${{ secrets.LINEAR_API_KEY != '' }}
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+          ISSUE_ID: ${{ github.event.client_payload.issueId }}
+          BRANCH_NAME: ${{ needs.process-claude-ready.outputs.branch_name }}
         run: |
           echo "📝 Updating Linear issue status"
           
-          # Update Linear issue with PR link
-          # This requires Linear API key to be configured
-          # curl -X POST \
-          #   -H "Authorization: $LINEAR_API_KEY" \
-          #   -H "Content-Type: application/json" \
-          #   https://api.linear.app/graphql \
-          #   -d '{
-          #     "query": "mutation { commentCreate(input: { issueId: \"${{ github.event.client_payload.issueId }}\", body: \"🤖 GitHub Action processed this issue\\n\\nBranch created and PR opened for refactoring.\" }) { success } }"
-          #   }'
+          # First, get the issue's internal ID and current labels
+          RESPONSE=$(curl -s -X POST \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -H "Content-Type: application/json" \
+            https://api.linear.app/graphql \
+            -d "{
+              \"query\": \"query { issue(id: \\\"$ISSUE_ID\\\") { id labels { nodes { id name } } } }\"
+            }")
+          
+          # Extract the issue's internal ID
+          INTERNAL_ID=$(echo "$RESPONSE" | jq -r '.data.issue.id')
+          
+          if [ "$INTERNAL_ID" != "null" ] && [ -n "$INTERNAL_ID" ]; then
+            echo "Found issue with internal ID: $INTERNAL_ID"
+            
+            # Get all label IDs except "Ready for Claude"
+            LABEL_IDS=$(echo "$RESPONSE" | jq -r '.data.issue.labels.nodes[] | select(.name != "Ready for Claude" and .name != "ready for Claude") | .id' | jq -R -s -c 'split("\n")[:-1]')
+            
+            echo "Keeping labels: $LABEL_IDS"
+            
+            # Update the issue to remove "Ready for Claude" label and add "In Progress"
+            UPDATE_RESPONSE=$(curl -s -X POST \
+              -H "Authorization: $LINEAR_API_KEY" \
+              -H "Content-Type: application/json" \
+              https://api.linear.app/graphql \
+              -d "{
+                \"query\": \"mutation { issueUpdate(id: \\\"$INTERNAL_ID\\\", input: { labelIds: $LABEL_IDS }) { success issue { labels { nodes { name } } } } }\"
+              }")
+            
+            echo "Label update response: $UPDATE_RESPONSE"
+            
+            # Add a comment with the PR information
+            COMMENT_RESPONSE=$(curl -s -X POST \
+              -H "Authorization: $LINEAR_API_KEY" \
+              -H "Content-Type: application/json" \
+              https://api.linear.app/graphql \
+              -d "{
+                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nBranch created: \`$BRANCH_NAME\`\\n\\nPR opened for Claude Code refactoring. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Use Claude Code to implement the changes\\n3. Push changes to the PR\\\" }) { success } }\"
+              }")
+            
+            echo "Comment creation response: $COMMENT_RESPONSE"
+          else
+            echo "⚠️ Could not find Linear issue with ID: $ISSUE_ID"
+            echo "API Response: $RESPONSE"
+          fi
 
   # Job 4: Debug - Show all received data
   debug-payload:
