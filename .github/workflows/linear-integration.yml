@@ -34,8 +34,10 @@ jobs:
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           
           # Create branch name based on issue type
-          if [[ "${{ toJson(github.event.client_payload.labels) }}" == *"Bug"* ]]; then
+          if [[ "${{ toJson(github.event.client_payload.labels) }}" == *"Bug"* ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"bug"* ]]; then
             BRANCH_NAME="fix/${TEAM,,}-${SHORT_ID}"
+          elif [[ "${{ toJson(github.event.client_payload.labels) }}" == *"feature"* ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"Feature"* ]]; then
+            BRANCH_NAME="feature/${TEAM,,}-${SHORT_ID}"
           else
             BRANCH_NAME="refactor/${TEAM,,}-${SHORT_ID}"
           fi
@@ -50,7 +52,141 @@ jobs:
           
       - name: Generate Claude instructions
         run: |
-          cat > refactoring-instructions.md << 'EOF'
+          # Determine issue type and generate appropriate instructions
+          ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
+          
+          if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"Bug"* ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"bug"* ]]; then
+            cat > refactoring-instructions.md << 'EOF'
+          # 🐛 Bug Fix: ${{ github.event.client_payload.title }}
+          
+          ## Issue Details
+          - **ID**: ${{ github.event.client_payload.issueId }}
+          - **Team**: ${{ github.event.client_payload.team }}
+          - **Priority**: ${{ github.event.client_payload.priority }}
+          - **Estimate**: ${{ github.event.client_payload.estimate }} points
+          - **Linear URL**: ${{ github.event.client_payload.url }}
+          
+          ## Labels
+          ${{ toJson(github.event.client_payload.labels) }}
+          
+          ## Bug Report
+          
+          ### Current Behavior
+          ${{ github.event.client_payload.sections.currentBehavior }}
+          
+          ### Expected Behavior
+          ${{ github.event.client_payload.sections.expectedBehavior }}
+          
+          ### Steps to Reproduce
+          ${{ github.event.client_payload.sections.stepsToReproduce }}
+          
+          ### Technical Details
+          - **Component**: ${{ github.event.client_payload.sections.component }}
+          - **Browser/Environment**: ${{ github.event.client_payload.sections.environment }}
+          - **Priority**: ${{ github.event.client_payload.sections.priority }}
+          
+          ### Proposed Solution
+          ${{ github.event.client_payload.sections.proposedSolution }}
+          
+          ---
+          
+          ## Bug Fix Guidelines for Claude Code
+          
+          1. **Reproduce the Bug**
+             - Follow the steps to reproduce
+             - Verify the current behavior
+             - Document any additional observations
+          
+          2. **Root Cause Analysis**
+             - Identify the source of the bug
+             - Check for related issues
+             - Review recent changes that might have introduced it
+          
+          3. **Implementation**
+             - Fix the root cause, not just symptoms
+             - Ensure backward compatibility
+             - Add defensive coding where appropriate
+          
+          4. **Testing**
+             - Write tests that reproduce the bug
+             - Ensure the fix resolves the issue
+             - Add regression tests
+             - Run full test suite
+          
+          5. **Verification**
+             - Test the fix in development
+             - Verify no new issues introduced
+             - Check performance impact
+          EOF
+          
+          elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"feature"* ]]; then
+            cat > refactoring-instructions.md << 'EOF'
+          # ✨ Feature Implementation: ${{ github.event.client_payload.title }}
+          
+          ## Issue Details
+          - **ID**: ${{ github.event.client_payload.issueId }}
+          - **Team**: ${{ github.event.client_payload.team }}
+          - **Priority**: ${{ github.event.client_payload.priority }}
+          - **Estimate**: ${{ github.event.client_payload.estimate }} points
+          - **Linear URL**: ${{ github.event.client_payload.url }}
+          
+          ## Labels
+          ${{ toJson(github.event.client_payload.labels) }}
+          
+          ## Feature Request
+          
+          ### Description
+          ${{ github.event.client_payload.sections.description }}
+          
+          ### Requirements
+          ${{ github.event.client_payload.sections.requirements }}
+          
+          ### Technical Details
+          - **Component**: ${{ github.event.client_payload.sections.component }}
+          - **Priority**: ${{ github.event.client_payload.sections.priority }}
+          - **Estimated Complexity**: ${{ github.event.client_payload.sections.complexity }}
+          
+          ### Acceptance Criteria
+          ${{ github.event.client_payload.sections.acceptanceCriteria }}
+          
+          ---
+          
+          ## Feature Implementation Guidelines for Claude Code
+          
+          1. **Planning Phase**
+             - Review all requirements thoroughly
+             - Break down into smaller tasks
+             - Identify dependencies
+             - Plan the implementation approach
+          
+          2. **Architecture Design**
+             - Design database schema if needed
+             - Plan API endpoints
+             - Consider security implications
+             - Design for scalability
+          
+          3. **Implementation**
+             - Follow Rails conventions
+             - Implement incrementally
+             - Write clean, maintainable code
+             - Add proper error handling
+          
+          4. **Testing Strategy**
+             - Write unit tests for all new code
+             - Add integration tests for workflows
+             - Test edge cases
+             - Ensure acceptance criteria are met
+          
+          5. **Documentation**
+             - Update API documentation
+             - Add code comments for complex logic
+             - Update README if needed
+             - Document any new configurations
+          EOF
+          
+          else
+            # Default template for other types
+            cat > refactoring-instructions.md << 'EOF'
           # Linear Issue: ${{ github.event.client_payload.title }}
           
           ## Issue Details
@@ -66,46 +202,33 @@ jobs:
           ## Description
           ${{ github.event.client_payload.description }}
           
-          ## Issue Type: ${{ github.event.client_payload.sections.type }}
-          
-          ### Current Behavior
-          ${{ github.event.client_payload.sections.currentBehavior }}
-          
-          ### Expected Behavior
-          ${{ github.event.client_payload.sections.expectedBehavior }}
-          
-          ### Steps to Reproduce
-          ${{ github.event.client_payload.sections.stepsToReproduce }}
-          
-          ### Proposed Solution
-          ${{ github.event.client_payload.sections.proposedSolution }}
+          ## Additional Information
+          ${{ toJson(github.event.client_payload.sections) }}
           
           ---
           
-          ## Refactoring Guidelines for Claude Code
+          ## Implementation Guidelines for Claude Code
           
-          1. **Analyze the Issue**
-             - Review the current behavior and identify the root cause
-             - Consider the expected behavior and acceptance criteria
-             - Evaluate the proposed solution
+          1. **Analysis**
+             - Review the requirements
+             - Understand the context
+             - Identify key objectives
           
-          2. **Implementation Approach**
-             - Follow Rails best practices
-             - Ensure backward compatibility
-             - Write comprehensive tests
-             - Update documentation as needed
+          2. **Implementation**
+             - Follow best practices
+             - Write clean code
+             - Ensure maintainability
           
-          3. **Testing Requirements**
-             - Add unit tests for bug fixes
-             - Ensure all existing tests pass
-             - Add integration tests if needed
+          3. **Testing**
+             - Add appropriate tests
+             - Verify functionality
+             - Check edge cases
           
-          4. **Code Quality**
-             - Run RuboCop for style consistency
-             - Ensure no N+1 queries
-             - Optimize performance where possible
-          
+          4. **Documentation**
+             - Update relevant documentation
+             - Add code comments
           EOF
+          fi
           
           echo "✅ Created refactoring instructions"
           

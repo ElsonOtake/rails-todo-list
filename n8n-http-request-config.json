@@ -1,0 +1,22 @@
+{
+  "method": "POST",
+  "url": "https://api.github.com/repos/ElsonOtake/rails-todo-list/dispatches",
+  "authentication": "genericCredentialType",
+  "genericAuthType": "httpHeaderAuth",
+  "sendHeaders": true,
+  "headerParameters": {
+    "parameters": [
+      {
+        "name": "Accept",
+        "value": "application/vnd.github.v3+json"
+      },
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  },
+  "sendBody": true,
+  "specifyBody": "json",
+  "jsonBody": "{\n  \"event_type\": \"linear_event\",\n  \"client_payload\": {\n    \"issueId\": \"{{ $json.issueId }}\",\n    \"title\": \"{{ $json.title }}\",\n    \"description\": \"{{ $json.description }}\",\n    \"labels\": {{ $json.labels }},\n    \"team\": \"{{ $json.team }}\",\n    \"url\": \"{{ $json.url }}\",\n    \"priority\": {{ $json.priority }},\n    \"estimate\": {{ $json.estimate }},\n    \"sections\": {\n      \"type\": \"{{ $json.sections.type }}\",\n      \"currentBehavior\": \"{{ $json.sections.currentBehavior }}\",\n      \"expectedBehavior\": \"{{ $json.sections.expectedBehavior }}\",\n      \"stepsToReproduce\": \"{{ $json.sections.stepsToReproduce }}\",\n      \"proposedSolution\": \"{{ $json.sections.proposedSolution }}\"\n    }\n  }\n}"
+}
