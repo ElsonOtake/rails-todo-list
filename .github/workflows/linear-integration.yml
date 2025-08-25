@@ -1,0 +1,156 @@
+# .github/workflows/linear-integration.yml
+name: Linear Integration Workflow
+
+# This workflow is triggered by repository dispatch events from Linear via n8n
+on:
+  repository_dispatch:
+    types: 
+      - linear_event           # Main event type from n8n
+      - linear_issue_created   # Optional: specific event types
+      - linear_issue_updated
+      - linear_issue_completed
+
+jobs:
+  # Job 1: Handle issue completion (trigger deployment)
+  deploy-on-completion:
+    if: github.event.client_payload.issue.state == 'Done' || github.event.client_payload.issue.state == 'Completed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Deploy to production
+        run: |
+          echo "🚀 Deploying because Linear issue completed"
+          echo "Issue: ${{ github.event.client_payload.issue.title }}"
+          echo "ID: ${{ github.event.client_payload.issue.id }}"
+          
+          # Add your deployment commands here
+          # Examples:
+          # npm run build
+          # npm run deploy
+          # docker build -t myapp .
+          # kubectl apply -f deployment.yml
+          
+      - name: Notify deployment success
+        run: |
+          echo "✅ Deployment completed successfully"
+          # You could send notifications back to Linear or Slack here
+
+  # Job 2: Create branch for new issues  
+  create-feature-branch:
+    if: github.event.client_payload.action == 'create'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Create feature branch
+        run: |
+          echo "🌿 Creating feature branch for new Linear issue"
+          
+          # Create branch name from Linear issue ID
+          ISSUE_ID="${{ github.event.client_payload.issue.id }}"
+          BRANCH_NAME="feature/${ISSUE_ID,,}"  # Convert to lowercase
+          
+          echo "Branch name: $BRANCH_NAME"
+          
+          # Create and push the branch
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          
+          echo "✅ Branch $BRANCH_NAME created successfully"
+
+  # Job 3: Run tests when issues are updated
+  run-tests:
+    if: github.event.client_payload.action == 'update' && github.event.client_payload.issue.state == 'In Review'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js (if needed)
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run tests
+        run: |
+          echo "🧪 Running tests for Linear issue update"
+          echo "Issue: ${{ github.event.client_payload.issue.title }}"
+          
+          # Run your tests
+          npm test
+          # npm run test:e2e
+          # pytest
+          # go test ./...
+          
+      - name: Test results
+        run: |
+          echo "✅ Tests completed for issue ${{ github.event.client_payload.issue.id }}"
+
+  # Job 4: Sync status back to Linear (optional)
+  sync-status:
+    runs-on: ubuntu-latest
+    if: always()  # Run regardless of other job outcomes
+    needs: [deploy-on-completion, create-feature-branch, run-tests]
+    steps:
+      - name: Update Linear issue status
+        run: |
+          echo "🔄 Syncing status back to Linear"
+          echo "This is where you could update the Linear issue via API"
+          
+          # Example: Update Linear issue with deployment status
+          # curl -X POST \
+          #   -H "Authorization: Bearer ${{ secrets.LINEAR_API_TOKEN }}" \
+          #   -H "Content-Type: application/json" \
+          #   https://api.linear.app/graphql \
+          #   -d '{"query": "mutation { issueUpdate(id: \"'${{ github.event.client_payload.issue.id }}'\", input: { stateId: \"completed-state-id\" }) { success } }"}'
+
+  # Job 5: Debug job to see all event data
+  debug-event:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print all event data
+        run: |
+          echo "🐛 Debug: Full event data"
+          echo "Event action: ${{ github.event.action }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Sender: ${{ github.event.sender.login }}"
+          echo ""
+          echo "📋 Linear payload:"
+          echo '${{ toJson(github.event.client_payload) }}'
+          echo ""
+          echo "🏷️ Available data:"
+          echo "- Issue ID: ${{ github.event.client_payload.issue.id }}"
+          echo "- Issue Title: ${{ github.event.client_payload.issue.title }}"
+          echo "- Issue State: ${{ github.event.client_payload.issue.state }}"
+          echo "- Assignee: ${{ github.event.client_payload.issue.assignee }}"
+          echo "- Action: ${{ github.event.client_payload.action }}"
+          echo "- URL: ${{ github.event.client_payload.issue.url }}"
+
+  # Job 6: Conditional job based on team
+  team-specific-actions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Frontend team actions
+        if: github.event.client_payload.issue.team == 'Frontend'
+        run: |
+          echo "🎨 Running frontend-specific actions"
+          # Build UI, run Storybook, deploy to staging, etc.
+          
+      - name: Backend team actions  
+        if: github.event.client_payload.issue.team == 'Backend'
+        run: |
+          echo "⚙️ Running backend-specific actions"
+          # Run API tests, database migrations, etc.
+          
+      - name: DevOps team actions
+        if: github.event.client_payload.issue.team == 'DevOps'
+        run: |
+          echo "🚀 Running DevOps-specific actions"
+          # Infrastructure updates, monitoring setup, etc.
