@@ -1,73 +1,65 @@
-# Refactoring Task from Linear Issue HLX-601
+# ✨ Feature Implementation: ## 📋 Feature Request Test (AI Project - n8n - Claude Code)
 
-## Issue Title
-Criação de cartão com a tag de pronta no Linear.
+## Issue Details
+- **ID**: 52dd2ccb-285d-4979-b6b5-f902a1d3fcba
+- **Team**: Helix
+- **Priority**: 2
+- **Estimate**: 2 points
+- **Linear URL**: https://linear.app/kobana/issue/HLX-580/feature-request-test-ai-project-n8n-claude-code
 
-## Description
-Title: Improvements for the ToDoList app
+## Labels
+[
+  "Ready for Claude"
+]
 
-Description:
+## Feature Request
 
-Improvements:
+### Description
+Add dark mode to the ToDoList app
 
-* Update the project README.md file
-* Things to cover:
-  * Ruby version
-  * System dependencies
-  * Configuration
-  * Database creation
-  * Database initialization
-  * How to run the test suite
-  * Services (job queues, cache servers, search engines, etc.)
-  * Deployment instructions
+### Requirements
+- [ ] icon to select between dark or light mode 
+- [ ] keep the soft ui colors for both modes
 
-Success criteria:
+### Technical Details
+- **Component**: FrontEnd
+- **Priority**: High
+- **Estimated Complexity**: Easy
 
-* Good UX
-
-## Refactoring Guidelines
-
-1. **Code Quality Improvements**
-   - Identify and eliminate code duplication
-   - Extract complex logic into well-named methods
-   - Improve variable and method naming for clarity
-   - Apply SOLID principles where applicable
-
-2. **Performance Optimizations**
-   - Optimize database queries (N+1 query prevention)
-   - Add appropriate indexes
-   - Implement caching where beneficial
-   - Reduce memory allocation in hot paths
-
-3. **Rails Best Practices**
-   - Use Rails conventions and idioms
-   - Leverage ActiveRecord scopes and callbacks appropriately
-   - Implement proper error handling
-   - Add data validations where missing
-
-4. **Testing**
-   - Ensure all changes maintain or improve test coverage
-   - Add tests for any new functionality
-   - Refactor test code for better maintainability
-
-5. **Documentation**
-   - Update code comments where necessary
-   - Document complex business logic
-   - Update CLAUDE.md if architecture changes
-
-## Files to Focus On
-Based on the issue description, prioritize refactoring in these areas:
-- Models with complex business logic
-- Controllers with multiple responsibilities
-- Views with excessive logic
-- JavaScript controllers that could be simplified
-
-## Success Criteria
-- All existing tests pass
-- Code follows Rails conventions
-- Improved readability and maintainability
-- No performance regressions
+### Acceptance Criteria
+- [ ] Users can select between light or dark mode
+- [ ] The selection is valid during the session
 
 ---
-Generated at: $(date)
-Linear Issue: https://linear.app/issue/HLX-601
+
+## Feature Implementation Guidelines for Claude Code
+
+1. **Planning Phase**
+   - Review all requirements thoroughly
+   - Break down into smaller tasks
+   - Identify dependencies
+   - Plan the implementation approach
+
+2. **Architecture Design**
+   - Design database schema if needed
+   - Plan API endpoints
+   - Consider security implications
+   - Design for scalability
+
+3. **Implementation**
+   - Follow Rails conventions
+   - Implement incrementally
+   - Write clean, maintainable code
+   - Add proper error handling
+
+4. **Testing Strategy**
+   - Write unit tests for all new code
+   - Add integration tests for workflows
+   - Test edge cases
+   - Ensure acceptance criteria are met
+
+5. **Documentation**
+   - Update API documentation
+   - Add code comments for complex logic
+   - Update README if needed
+   - Document any new configurations
