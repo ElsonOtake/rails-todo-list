@@ -17,6 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       branch_name: ${{ steps.create-branch.outputs.branch_name }}
+      pr_url: ${{ steps.create-pr.outputs.pr_url }}
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -273,6 +275,7 @@ jobs:
           git push origin ${{ steps.create-branch.outputs.branch_name }}
           
       - name: Create pull request
+        id: create-pr
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
@@ -299,13 +302,38 @@ jobs:
           ---
           *This PR was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
           
-          gh pr create \
+          PR_URL=$(gh pr create \
             --title "[${{ github.event.client_payload.team }}] ${{ github.event.client_payload.title }}" \
             --body "$PR_BODY" \
             --head ${{ steps.create-branch.outputs.branch_name }} \
             --base main \
             --label "linear-integration" \
-            --label "needs-claude"
+            --label "needs-claude")
+          
+          echo "PR created: $PR_URL"
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          
+          # Extract PR number from URL
+          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+      
+      - name: Add Claude comment to PR
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          # Determine the appropriate message based on issue type
+          ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
+          
+          if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"Bug"* ]]; then
+            COMMENT_BODY="@claude Fix this bug based on the issue description and the instructions in \`refactoring-instructions.md\`"
+          elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "${{ toJson(github.event.client_payload.labels) }}" == *"feature"* ]]; then
+            COMMENT_BODY="@claude Implement this feature based on the issue description and the requirements in \`refactoring-instructions.md\`"
+          else
+            COMMENT_BODY="@claude Implement this based on the issue description and the guidelines in \`refactoring-instructions.md\`"
+          fi
+          
+          gh pr comment ${{ steps.create-pr.outputs.pr_number }} --body "$COMMENT_BODY"
+          echo "✅ Added Claude comment to PR #${{ steps.create-pr.outputs.pr_number }}"
 
   # Job 2: Handle bug issues specifically
   handle-bugs:
@@ -346,6 +374,8 @@ jobs:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           ISSUE_ID: ${{ github.event.client_payload.issueId }}
           BRANCH_NAME: ${{ needs.process-claude-ready.outputs.branch_name }}
+          PR_URL: ${{ needs.process-claude-ready.outputs.pr_url }}
+          PR_NUMBER: ${{ needs.process-claude-ready.outputs.pr_number }}
         run: |
           echo "📝 Updating Linear issue status"
           
@@ -386,7 +416,7 @@ jobs:
               -H "Content-Type: application/json" \
               https://api.linear.app/graphql \
               -d "{
-                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nBranch created: \`$BRANCH_NAME\`\\n\\nPR opened for Claude Code refactoring. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Use Claude Code to implement the changes\\n3. Push changes to the PR\\\" }) { success } }\"
+                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nPull Request: $PR_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe PR has been created and Claude has been mentioned to implement the changes. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the PR comments where @claude has been mentioned\\n3. Claude Code will implement the changes\\n4. Push changes to the PR\\\" }) { success } }\"
               }")
             
             echo "Comment creation response: $COMMENT_RESPONSE"
