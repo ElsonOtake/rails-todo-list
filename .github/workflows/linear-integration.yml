@@ -369,7 +369,6 @@ jobs:
     needs: [process-claude-ready]
     steps:
       - name: Update Linear issue
-        if: ${{ secrets.LINEAR_API_KEY != '' }}
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           ISSUE_ID: ${{ github.event.client_payload.issueId }}
@@ -378,6 +377,12 @@ jobs:
           PR_NUMBER: ${{ needs.process-claude-ready.outputs.pr_number }}
         run: |
           echo "📝 Updating Linear issue status"
+          
+          # Check if LINEAR_API_KEY is set
+          if [ -z "$LINEAR_API_KEY" ]; then
+            echo "⚠️ LINEAR_API_KEY is not set. Skipping Linear update."
+            exit 0
+          fi
           
           # First, get the issue's internal ID and current labels
           RESPONSE=$(curl -s -X POST \
