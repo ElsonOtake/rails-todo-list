@@ -1,0 +1,29 @@
+{
+  "source": "linear",
+  "issueId": "52dd2ccb-285d-4979-b6b5-f902a1d3fcba",
+  "title": "## 📋 Feature Request Test (AI Project - n8n - Claude Code)",
+  "team": "Helix",
+  "priority": 2,
+  "estimate": 2,
+  "labels": [
+  "Ready for Claude"
+],
+  "type": "feature",
+  "url": "https://linear.app/kobana/issue/HLX-580/feature-request-test-ai-project-n8n-claude-code",
+  "timestamp": "2025-08-26T03:13:44Z",
+  "branch": "feature/helix-52dd2ccb",
+  "instructions": {
+    "currentBehavior": "",
+    "expectedBehavior": "",
+    "stepsToReproduce": "",
+    "proposedSolution": "",
+    "description": "Add dark mode to the ToDoList app",
+    "requirements": "- [ ] icon to select between dark or light mode 
+- [ ] keep the soft ui colors for both modes",
+    "technicalDetails": "- **Component**: FrontEnd
+- **Priority**: High
+- **Estimated Complexity**: Easy",
+    "acceptanceCriteria": "- [ ] Users can select between light or dark mode
+- [ ] The selection is valid during the session"
+  }
+}
