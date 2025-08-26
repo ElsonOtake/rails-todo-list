@@ -146,9 +146,7 @@ jobs:
           ${{ github.event.client_payload.sections.requirements }}
           
           ### Technical Details
-          - **Component**: ${{ github.event.client_payload.sections.component }}
-          - **Priority**: ${{ github.event.client_payload.sections.priority }}
-          - **Estimated Complexity**: ${{ github.event.client_payload.sections.complexity }}
+          ${{ github.event.client_payload.sections.technicalDetails }}
           
           ### Acceptance Criteria
           ${{ github.event.client_payload.sections.acceptanceCriteria }}
@@ -255,7 +253,11 @@ jobs:
               "currentBehavior": "${{ github.event.client_payload.sections.currentBehavior }}",
               "expectedBehavior": "${{ github.event.client_payload.sections.expectedBehavior }}",
               "stepsToReproduce": "${{ github.event.client_payload.sections.stepsToReproduce }}",
-              "proposedSolution": "${{ github.event.client_payload.sections.proposedSolution }}"
+              "proposedSolution": "${{ github.event.client_payload.sections.proposedSolution }}",
+              "description": "${{ github.event.client_payload.sections.description }}",
+              "requirements": "${{ github.event.client_payload.sections.requirements }}",
+              "technicalDetails": "${{ github.event.client_payload.sections.technicalDetails }}",
+              "acceptanceCriteria": "${{ github.event.client_payload.sections.acceptanceCriteria }}"
             }
           }
           EOF
