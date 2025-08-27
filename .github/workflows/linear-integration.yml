@@ -329,7 +329,7 @@ jobs:
         
       - name: Add Claude comment to issue
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_TRIGGER_TOKEN || github.token }}
           ISSUE_NUMBER: ${{ needs.process-claude-ready.outputs.issue_number }}
         run: |
           echo "📝 Adding Claude comment to GitHub issue #$ISSUE_NUMBER"
@@ -545,7 +545,7 @@ jobs:
         
       - name: Add Claude comment to PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_TRIGGER_TOKEN || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ needs.process-linear-pr.outputs.pr_number }}
           BRANCH_NAME: ${{ needs.process-linear-pr.outputs.branch_name }}
         run: |
