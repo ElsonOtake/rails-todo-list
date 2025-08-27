@@ -242,8 +242,9 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       always() && 
-      (needs.process-claude-ready.result == 'success' || needs.process-linear-pr.result == 'success')
-    needs: [process-claude-ready, process-linear-pr]
+      (needs.comment-on-issue.result == 'success' || needs.comment-on-issue.result == 'skipped' || 
+       needs.comment-on-pr.result == 'success' || needs.comment-on-pr.result == 'skipped')
+    needs: [process-claude-ready, process-linear-pr, comment-on-issue, comment-on-pr]
     steps:
       - name: Update Linear issue
         env:
@@ -321,7 +322,7 @@ jobs:
   comment-on-issue:
     runs-on: ubuntu-latest
     if: needs.process-claude-ready.outputs.issue_number != ''
-    needs: [process-claude-ready, update-linear]
+    needs: [process-claude-ready]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -535,10 +536,8 @@ jobs:
 
   # Job 8: Add Claude comment to PR
   comment-on-pr:
-    if: |
-      needs.process-linear-pr.result == 'success' &&
-      needs.update-linear.result == 'success'
-    needs: [process-linear-pr, update-linear]
+    if: needs.process-linear-pr.result == 'success'
+    needs: [process-linear-pr]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
