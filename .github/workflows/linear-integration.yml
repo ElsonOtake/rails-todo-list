@@ -76,25 +76,53 @@ jobs:
             git checkout -b "$BRANCH_NAME"
           fi
           
-      - name: Generate Claude instructions
+      - name: Create placeholder file for issue tracking
         run: |
-          # Determine issue type and generate appropriate instructions
+          # Create a simple placeholder file to have something to commit
+          cat > .linear-issue-${{ github.event.client_payload.issueId }}.md << 'EOF'
+          # Linear Issue: ${{ github.event.client_payload.title }}
+          
+          **Issue ID**: ${{ github.event.client_payload.issueId }}
+          **Branch**: ${{ steps.create-branch.outputs.branch_name }}
+          **Created**: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          This file tracks the Linear issue in the git history.
+          The actual issue content is in the GitHub issue.
+          EOF
+          
+          echo "✅ Created placeholder file"
+          
+      - name: Commit and push branch
+        run: |
+          git add .linear-issue-*.md
+          git commit -m "Add Linear issue ${{ github.event.client_payload.issueId }} for implementation
+          
+          Issue: ${{ github.event.client_payload.title }}
+          Team: ${{ github.event.client_payload.team }}
+          Priority: P${{ github.event.client_payload.priority }}
+          Labels: ${{ join(github.event.client_payload.labels, ', ') }}"
+          
+          git push --force origin ${{ steps.create-branch.outputs.branch_name }}
+          
+      - name: Create GitHub issue
+        id: create-issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          # Determine issue type and create appropriate content
           ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
           LABELS='${{ toJson(github.event.client_payload.labels) }}'
           
           if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "$LABELS" == *"Bug"* ]] || [[ "$LABELS" == *"bug"* ]]; then
-            cat > refactoring-instructions.md << 'EOF'
-          # 🐛 Bug Fix: ${{ github.event.client_payload.title }}
+            ISSUE_BODY="# 🐛 Bug Fix: ${{ github.event.client_payload.title }}
           
           ## Issue Details
-          - **ID**: ${{ github.event.client_payload.issueId }}
+          - **Linear ID**: ${{ github.event.client_payload.issueId }}
           - **Team**: ${{ github.event.client_payload.team }}
-          - **Priority**: ${{ github.event.client_payload.priority }}
+          - **Priority**: P${{ github.event.client_payload.priority }}
           - **Estimate**: ${{ github.event.client_payload.estimate }} points
           - **Linear URL**: ${{ github.event.client_payload.url }}
-          
-          ## Labels
-          ${{ toJson(github.event.client_payload.labels) }}
+          - **Branch**: \`${{ steps.create-branch.outputs.branch_name }}\`
           
           ## Bug Report
           
@@ -116,54 +144,23 @@ jobs:
           ${{ github.event.client_payload.sections.proposedSolution }}
           
           ---
-          
-          ## Bug Fix Guidelines for Claude Code
-          
-          1. **Reproduce the Bug**
-             - Follow the steps to reproduce
-             - Verify the current behavior
-             - Document any additional observations
-          
-          2. **Root Cause Analysis**
-             - Identify the source of the bug
-             - Check for related issues
-             - Review recent changes that might have introduced it
-          
-          3. **Implementation**
-             - Fix the root cause, not just symptoms
-             - Ensure backward compatibility
-             - Add defensive coding where appropriate
-          
-          4. **Testing**
-             - Write tests that reproduce the bug
-             - Ensure the fix resolves the issue
-             - Add regression tests
-             - Run full test suite
-          
-          5. **Verification**
-             - Test the fix in development
-             - Verify no new issues introduced
-             - Check performance impact
-          EOF
+          *This issue was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
           
           elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "$LABELS" == *"feature"* ]] || [[ "$LABELS" == *"Feature"* ]]; then
-            cat > refactoring-instructions.md << 'EOF'
-          # ✨ Feature Implementation: ${{ github.event.client_payload.title }}
+            ISSUE_BODY="# ✨ Feature Implementation: ${{ github.event.client_payload.title }}
           
           ## Issue Details
-          - **ID**: ${{ github.event.client_payload.issueId }}
+          - **Linear ID**: ${{ github.event.client_payload.issueId }}
           - **Team**: ${{ github.event.client_payload.team }}
-          - **Priority**: ${{ github.event.client_payload.priority }}
+          - **Priority**: P${{ github.event.client_payload.priority }}
           - **Estimate**: ${{ github.event.client_payload.estimate }} points
           - **Linear URL**: ${{ github.event.client_payload.url }}
-          
-          ## Labels
-          ${{ toJson(github.event.client_payload.labels) }}
+          - **Branch**: \`${{ steps.create-branch.outputs.branch_name }}\`
           
           ## Feature Request
           
           ### Description
-          ${{ github.event.client_payload.sections.description }}
+          ${{ github.event.client_payload.description }}
           
           ### Requirements
           ${{ github.event.client_payload.sections.requirements }}
@@ -175,54 +172,19 @@ jobs:
           ${{ github.event.client_payload.sections.acceptanceCriteria }}
           
           ---
-          
-          ## Feature Implementation Guidelines for Claude Code
-          
-          1. **Planning Phase**
-             - Review all requirements thoroughly
-             - Break down into smaller tasks
-             - Identify dependencies
-             - Plan the implementation approach
-          
-          2. **Architecture Design**
-             - Design database schema if needed
-             - Plan API endpoints
-             - Consider security implications
-             - Design for scalability
-          
-          3. **Implementation**
-             - Follow Rails conventions
-             - Implement incrementally
-             - Write clean, maintainable code
-             - Add proper error handling
-          
-          4. **Testing Strategy**
-             - Write unit tests for all new code
-             - Add integration tests for workflows
-             - Test edge cases
-             - Ensure acceptance criteria are met
-          
-          5. **Documentation**
-             - Update API documentation
-             - Add code comments for complex logic
-             - Update README if needed
-             - Document any new configurations
-          EOF
+          *This issue was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
           
           else
-            # Default template for other types
-            cat > refactoring-instructions.md << 'EOF'
-          # Linear Issue: ${{ github.event.client_payload.title }}
+            # Default template
+            ISSUE_BODY="# Linear Issue: ${{ github.event.client_payload.title }}
           
           ## Issue Details
-          - **ID**: ${{ github.event.client_payload.issueId }}
+          - **Linear ID**: ${{ github.event.client_payload.issueId }}
           - **Team**: ${{ github.event.client_payload.team }}
-          - **Priority**: ${{ github.event.client_payload.priority }}
+          - **Priority**: P${{ github.event.client_payload.priority }}
           - **Estimate**: ${{ github.event.client_payload.estimate }} points
           - **Linear URL**: ${{ github.event.client_payload.url }}
-          
-          ## Labels
-          ${{ toJson(github.event.client_payload.labels) }}
+          - **Branch**: \`${{ steps.create-branch.outputs.branch_name }}\`
           
           ## Description
           ${{ github.event.client_payload.description }}
@@ -231,103 +193,8 @@ jobs:
           ${{ toJson(github.event.client_payload.sections) }}
           
           ---
-          
-          ## Implementation Guidelines for Claude Code
-          
-          1. **Analysis**
-             - Review the requirements
-             - Understand the context
-             - Identify key objectives
-          
-          2. **Implementation**
-             - Follow best practices
-             - Write clean code
-             - Ensure maintainability
-          
-          3. **Testing**
-             - Add appropriate tests
-             - Verify functionality
-             - Check edge cases
-          
-          4. **Documentation**
-             - Update relevant documentation
-             - Add code comments
-          EOF
-          fi
-          
-          echo "✅ Created refactoring instructions"
-          
-      - name: Create Claude task file
-        run: |
-          cat > .claude-task.json << EOF
-          {
-            "source": "linear",
-            "issueId": "${{ github.event.client_payload.issueId }}",
-            "title": "${{ github.event.client_payload.title }}",
-            "team": "${{ github.event.client_payload.team }}",
-            "priority": ${{ github.event.client_payload.priority }},
-            "estimate": ${{ github.event.client_payload.estimate }},
-            "labels": ${{ toJson(github.event.client_payload.labels) }},
-            "type": "${{ github.event.client_payload.sections.type }}",
-            "url": "${{ github.event.client_payload.url }}",
-            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-            "branch": "${{ steps.create-branch.outputs.branch_name }}",
-            "instructions": {
-              "currentBehavior": "${{ github.event.client_payload.sections.currentBehavior }}",
-              "expectedBehavior": "${{ github.event.client_payload.sections.expectedBehavior }}",
-              "stepsToReproduce": "${{ github.event.client_payload.sections.stepsToReproduce }}",
-              "proposedSolution": "${{ github.event.client_payload.sections.proposedSolution }}",
-              "description": "${{ github.event.client_payload.sections.description }}",
-              "requirements": "${{ github.event.client_payload.sections.requirements }}",
-              "technicalDetails": "${{ github.event.client_payload.sections.technicalDetails }}",
-              "acceptanceCriteria": "${{ github.event.client_payload.sections.acceptanceCriteria }}"
-            }
-          }
-          EOF
-          
-          echo "✅ Created Claude task file"
-          
-      - name: Commit and push branch
-        run: |
-          git add refactoring-instructions.md .claude-task.json
-          git commit -m "Add Linear issue ${{ github.event.client_payload.issueId }} for Claude refactoring
-          
-          Issue: ${{ github.event.client_payload.title }}
-          Team: ${{ github.event.client_payload.team }}
-          Priority: P${{ github.event.client_payload.priority }}
-          Labels: ${{ join(github.event.client_payload.labels, ', ') }}"
-          
-          git push --force origin ${{ steps.create-branch.outputs.branch_name }}
-          
-      - name: Create GitHub issue
-        id: create-issue
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          ISSUE_BODY="## Linear Issue: ${{ github.event.client_payload.title }}
-          
-          ### Details
-          - **Team**: ${{ github.event.client_payload.team }}
-          - **Priority**: P${{ github.event.client_payload.priority }}
-          - **Estimate**: ${{ github.event.client_payload.estimate }} points
-          - **Linear URL**: ${{ github.event.client_payload.url }}
-          - **Branch**: \`${{ steps.create-branch.outputs.branch_name }}\`
-          
-          ### Issue Type: ${{ github.event.client_payload.sections.type }}
-          
-          **Current Behavior**: ${{ github.event.client_payload.sections.currentBehavior }}
-          
-          **Expected Behavior**: ${{ github.event.client_payload.sections.expectedBehavior }}
-          
-          ### Implementation Instructions
-          1. Check out the branch: \`git checkout ${{ steps.create-branch.outputs.branch_name }}\`
-          2. Review the \`refactoring-instructions.md\` file
-          3. Use Claude Code to implement the fix/refactor
-          4. Ensure all tests pass
-          5. Create a PR with your changes
-          
-          ---
           *This issue was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
+          fi
           
           ISSUE_URL=$(gh issue create \
             --title "[${{ github.event.client_payload.team }}] ${{ github.event.client_payload.title }}" \
@@ -471,11 +338,11 @@ jobs:
           LABELS='${{ toJson(github.event.client_payload.labels) }}'
           
           if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "$LABELS" == *"Bug"* ]] || [[ "$LABELS" == *"bug"* ]]; then
-            COMMENT_BODY="@claude Fix this bug based on the issue description and the instructions in \`refactoring-instructions.md\`"
+            COMMENT_BODY="@claude Fix this bug based on the issue description above"
           elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "$LABELS" == *"feature"* ]] || [[ "$LABELS" == *"Feature"* ]]; then
-            COMMENT_BODY="@claude Implement this feature based on the issue description and the requirements in \`refactoring-instructions.md\`"
+            COMMENT_BODY="@claude Implement this feature based on the issue description and requirements above"
           else
-            COMMENT_BODY="@claude Implement this based on the issue description and the guidelines in \`refactoring-instructions.md\`"
+            COMMENT_BODY="@claude Implement this based on the issue description above"
           fi
           
           gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
