@@ -5,7 +5,7 @@ name: Linear Integration Workflow
 on:
   repository_dispatch:
     types: 
-      - linear_event           # Main event type from n8n
+      - linear_to_github_issue_event  # Main event type from n8n
       - linear_issue_created   # When new issue is created
       - linear_issue_updated   # When issue is updated
       - linear_issue_completed # When issue is marked complete
