@@ -63,9 +63,11 @@ jobs:
           
           # Check if branch exists remotely
           if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
-            echo "Branch $BRANCH_NAME exists remotely, checking out and resetting"
+            echo "Branch $BRANCH_NAME exists remotely, fetching and resetting"
+            git fetch origin "$BRANCH_NAME":"$BRANCH_NAME"
             git checkout "$BRANCH_NAME"
             git reset --hard origin/main
+            git branch --set-upstream-to=origin/"$BRANCH_NAME" "$BRANCH_NAME"
           else
             echo "Creating new branch $BRANCH_NAME"
             git checkout -b "$BRANCH_NAME"
