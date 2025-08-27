@@ -11,30 +11,30 @@
   <% end %>
 
   <div class="form-group">
-    <%= form.label :title, class: "form-label" %>
+    <%= form.label :title, t("forms.title"), class: "form-label" %>
     <%= form.text_field :title, class: "form-input", placeholder: "Enter todo title...", autofocus: true %>
   </div>
 
   <div class="form-group">
-    <%= form.label :description, class: "form-label" %>
+    <%= form.label :description, t("forms.description"), class: "form-label" %>
     <%= form.text_area :description, class: "form-input", rows: 4, placeholder: "Add a description (optional)..." %>
   </div>
 
   <div class="form-row">
     <div class="form-group">
-      <%= form.label :priority, class: "form-label" %>
+      <%= form.label :priority, t("forms.priority"), class: "form-label" %>
       <%= form.select :priority, 
           options_for_select([
-            ["Low Priority", "low"],
-            ["Medium Priority", "medium"],
-            ["High Priority", "high"]
+            [t("todos.priority.low"), "low"],
+            [t("todos.priority.medium"), "medium"],
+            [t("todos.priority.high"), "high"]
           ], todo.priority),
           { include_blank: "Select priority..." },
           class: "form-select" %>
     </div>
 
     <div class="form-group">
-      <%= form.label :due_date, class: "form-label" %>
+      <%= form.label :due_date, t("forms.due_date"), class: "form-label" %>
       <%= form.datetime_field :due_date, class: "form-input" %>
     </div>
   </div>
@@ -43,13 +43,13 @@
     <div class="form-group">
       <label class="checkbox-label">
         <%= form.check_box :completed, class: "form-checkbox" %>
-        <span>Mark as completed</span>
+        <span><%= t("forms.complete") %></span>
       </label>
     </div>
   <% end %>
 
   <div class="form-actions">
     <%= form.submit class: "btn-primary" %>
-    <%= link_to "Cancel", todos_path, class: "btn-secondary" %>
+    <%= link_to t("forms.cancel"), todos_path, class: "btn-secondary" %>
   </div>
 <% end %>

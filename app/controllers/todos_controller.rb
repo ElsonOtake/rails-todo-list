@@ -14,7 +14,7 @@ class TodosController < ApplicationController
     @todo = Todo.new(todo_params)
 
     if @todo.save
-      redirect_to todos_path, notice: "Todo was successfully created."
+      redirect_to todos_path, notice: t("flash.todo_created")
     else
       render :new, status: :unprocessable_content
     end
@@ -25,7 +25,7 @@ class TodosController < ApplicationController
 
   def update
     if @todo.update(todo_params)
-      redirect_to todos_path, notice: "Todo was successfully updated."
+      redirect_to todos_path, notice: t("flash.todo_updated")
     else
       render :edit, status: :unprocessable_content
     end
@@ -33,7 +33,7 @@ class TodosController < ApplicationController
 
   def destroy
     @todo.destroy
-    redirect_to todos_path, notice: "Todo was successfully deleted.", status: :see_other
+    redirect_to todos_path, notice: t("flash.todo_deleted"), status: :see_other
   end
 
   def toggle

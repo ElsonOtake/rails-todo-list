@@ -29,3 +29,62 @@
 
 en:
   hello: "Hello world"
+  
+  # App title and navigation
+  app:
+    title: "Todo List - Organize Your Tasks"
+    name: "Todo List"
+    footer: "&copy; %{year} Todo List App. Built with Rails & Love."
+  
+  # Navigation
+  nav:
+    all_todos: "All Todos"
+    new_todo: "New Todo"
+    language: "Language"
+    toggle_dark_mode: "Toggle dark mode"
+  
+  # Page titles and headers
+  pages:
+    my_todos: "My Todos"
+    subtitle: "Stay organized and productive"
+    new_todo: "Create New Todo"
+    edit_todo: "Edit Todo"
+  
+  # Todo management
+  todos:
+    create_todo: "Create Todo"
+    no_todos: "No todos yet"
+    no_todos_text: "Create your first todo to get started"
+    overdue_tasks: "overdue task"
+    priority:
+      low: "Low"
+      medium: "Medium"
+      high: "High"
+    status:
+      completed: "Completed"
+      pending: "Pending"
+  
+  # Forms
+  forms:
+    title: "Title"
+    description: "Description"
+    priority: "Priority"
+    due_date: "Due Date"
+    save: "Save Todo"
+    update: "Update Todo"
+    cancel: "Cancel"
+    delete: "Delete"
+    edit: "Edit"
+    complete: "Complete"
+    mark_incomplete: "Mark Incomplete"
+    
+  # Flash messages
+  flash:
+    todo_created: "Todo was successfully created."
+    todo_updated: "Todo was successfully updated."
+    todo_deleted: "Todo was successfully deleted."
+    
+  # Languages
+  languages:
+    english: "English"
+    russian: "Русский"

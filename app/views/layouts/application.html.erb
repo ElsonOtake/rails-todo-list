@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html data-theme="light">
   <head>
-    <title><%= content_for(:title) || "Todo List - Organize Your Tasks" %></title>
+    <title><%= content_for(:title) || t("app.title") %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -31,14 +31,39 @@
               <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
               </svg>
-              <span class="logo-text">Todo List</span>
+              <span class="logo-text"><%= t("app.name") %></span>
             <% end %>
             
             <div class="nav-links">
-              <%= link_to "All Todos", todos_path, class: "nav-link" %>
+              <%= link_to t("nav.all_todos"), todos_path, class: "nav-link" %>
+              
+              <!-- Language Switcher -->
+              <div class="language-switcher">
+                <%= form_with url: switch_language_path, method: :post, local: true, class: "language-form" do |form| %>
+                  <% if I18n.locale == :en %>
+                    <%= form.button type: "submit", name: "locale", value: "ru", class: "language-btn", title: t("languages.russian") do %>
+                      <svg class="flag-icon" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#fff" d="M0 0h640v160H0z"/>
+                        <path fill="#0039a6" d="M0 160h640v160H0z"/>
+                        <path fill="#d52b1e" d="M0 320h640v160H0z"/>
+                      </svg>
+                    <% end %>
+                  <% else %>
+                    <%= form.button type: "submit", name: "locale", value: "en", class: "language-btn", title: t("languages.english") do %>
+                      <svg class="flag-icon" viewBox="0 0 640 480" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#012169" d="M0 0h640v480H0z"/>
+                        <path fill="#FFF" d="m75 0 244 181L562 0h78v62L400 241l240 178v61h-80L320 301 81 480H0v-60l239-178L0 64V0h75z"/>
+                        <path fill="#C8102E" d="m424 281 216 159v40L369 281h55zm-184 20 6 35L54 480H0l246-179zM640 0v3L391 191l2-44L590 0h50zM0 0l239 176h-60L0 42V0z"/>
+                        <path fill="#FFF" d="M241 0v480h160V0H241zM0 160v160h640V160H0z"/>
+                        <path fill="#C8102E" d="M0 193v96h640v-96H0zM273 0v480h96V0h-96z"/>
+                      </svg>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              </div>
               
               <!-- Dark Mode Toggle -->
-              <button class="theme-toggle" data-controller="theme" data-action="click->theme#toggle" title="Toggle dark mode">
+              <button class="theme-toggle" data-controller="theme" data-action="click->theme#toggle" title="<%= t('nav.toggle_dark_mode') %>">
                 <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                 </svg>
@@ -51,7 +76,7 @@
                 <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                New Todo
+                <%= t("nav.new_todo") %>
               <% end %>
             </div>
           </div>
@@ -78,7 +103,7 @@
 
       <footer class="footer">
         <div class="container">
-          <p>&copy; <%= Date.current.year %> Todo List App. Built with Rails & Love.</p>
+          <p><%= t("app.footer", year: Date.current.year).html_safe %></p>
         </div>
       </footer>
     </div>

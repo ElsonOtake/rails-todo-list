@@ -1,0 +1,61 @@
+ru:
+  hello: "Привет мир"
+  
+  # App title and navigation
+  app:
+    title: "Список дел - Организуйте свои задачи"
+    name: "Список дел"
+    footer: "&copy; %{year} Приложение Список дел. Создано с Rails и любовью."
+  
+  # Navigation
+  nav:
+    all_todos: "Все дела"
+    new_todo: "Новое дело"
+    language: "Язык"
+    toggle_dark_mode: "Переключить темную тему"
+  
+  # Page titles and headers
+  pages:
+    my_todos: "Мои дела"
+    subtitle: "Оставайтесь организованными и продуктивными"
+    new_todo: "Создать новое дело"
+    edit_todo: "Редактировать дело"
+  
+  # Todo management
+  todos:
+    create_todo: "Создать дело"
+    no_todos: "Дел пока нет"
+    no_todos_text: "Создайте свое первое дело для начала"
+    overdue_tasks: "просроченная задача"
+    priority:
+      low: "Низкий"
+      medium: "Средний"
+      high: "Высокий"
+    status:
+      completed: "Завершено"
+      pending: "Ожидается"
+  
+  # Forms
+  forms:
+    title: "Название"
+    description: "Описание"
+    priority: "Приоритет"
+    due_date: "Срок выполнения"
+    save: "Сохранить дело"
+    update: "Обновить дело"
+    cancel: "Отмена"
+    delete: "Удалить"
+    edit: "Редактировать"
+    complete: "Завершить"
+    mark_incomplete: "Отметить как незавершенное"
+    
+  # Flash messages
+  flash:
+    todo_created: "Дело успешно создано."
+    todo_updated: "Дело успешно обновлено."
+    todo_deleted: "Дело успешно удалено."
+    
+  # Languages
+  languages:
+    english: "English"
+    russian: "Русский"

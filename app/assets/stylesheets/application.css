@@ -667,6 +667,50 @@ textarea.form-input {
   display: block;
 }
 
+/* Language Switcher */
+.language-switcher {
+  display: flex;
+  align-items: center;
+}
+
+.language-form {
+  display: flex;
+  margin: 0;
+  padding: 0;
+}
+
+.language-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.language-btn:hover {
+  background: var(--gray-50);
+  border-color: var(--primary);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.1);
+}
+
+.flag-icon {
+  width: 1.5rem;
+  height: 1.125rem;
+  border-radius: 0.125rem;
+  transition: transform 0.2s ease;
+}
+
+.language-btn:hover .flag-icon {
+  transform: scale(1.1);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .page-title {
