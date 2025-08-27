@@ -6,6 +6,9 @@ Rails.application.routes.draw do
       patch :toggle
     end
   end
+  
+  # Language switching
+  post "set_locale" => "application#set_locale_from_params"
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

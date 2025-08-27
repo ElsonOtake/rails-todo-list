@@ -11,30 +11,30 @@
   <% end %>
 
   <div class="form-group">
-    <%= form.label :title, class: "form-label" %>
-    <%= form.text_field :title, class: "form-input", placeholder: "Enter todo title...", autofocus: true %>
+    <%= form.label :title, t('todos.form.title_label'), class: "form-label" %>
+    <%= form.text_field :title, class: "form-input", placeholder: t('todos.form.title_placeholder'), autofocus: true %>
   </div>
 
   <div class="form-group">
-    <%= form.label :description, class: "form-label" %>
-    <%= form.text_area :description, class: "form-input", rows: 4, placeholder: "Add a description (optional)..." %>
+    <%= form.label :description, t('todos.form.description_label'), class: "form-label" %>
+    <%= form.text_area :description, class: "form-input", rows: 4, placeholder: t('todos.form.description_placeholder') %>
   </div>
 
   <div class="form-row">
     <div class="form-group">
-      <%= form.label :priority, class: "form-label" %>
+      <%= form.label :priority, t('todos.form.priority_label'), class: "form-label" %>
       <%= form.select :priority, 
           options_for_select([
-            ["Low Priority", "low"],
-            ["Medium Priority", "medium"],
-            ["High Priority", "high"]
+            [t('todos.form.priority_low'), "low"],
+            [t('todos.form.priority_medium'), "medium"],
+            [t('todos.form.priority_high'), "high"]
           ], todo.priority),
           { include_blank: "Select priority..." },
           class: "form-select" %>
     </div>
 
     <div class="form-group">
-      <%= form.label :due_date, class: "form-label" %>
+      <%= form.label :due_date, t('todos.form.due_date_label'), class: "form-label" %>
       <%= form.datetime_field :due_date, class: "form-input" %>
     </div>
   </div>
@@ -43,13 +43,13 @@
     <div class="form-group">
       <label class="checkbox-label">
         <%= form.check_box :completed, class: "form-checkbox" %>
-        <span>Mark as completed</span>
+        <span><%= t('todos.complete') %></span>
       </label>
     </div>
   <% end %>
 
   <div class="form-actions">
-    <%= form.submit class: "btn-primary" %>
-    <%= link_to "Cancel", todos_path, class: "btn-secondary" %>
+    <%= form.submit t('todos.form.save'), class: "btn-primary" %>
+    <%= link_to t('todos.form.cancel'), todos_path, class: "btn-secondary" %>
   </div>
 <% end %>

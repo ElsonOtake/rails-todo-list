@@ -1,0 +1,58 @@
+pt:
+  hello: "Olá mundo"
+  
+  # Application
+  app:
+    title: "Lista de Tarefas - Organize Suas Atividades"
+    name: "Lista de Tarefas"
+    footer: "App Lista de Tarefas. Construído com Rails & Amor."
+    
+  # Navigation
+  nav:
+    all_todos: "Todas as Tarefas"
+    new_todo: "Nova Tarefa"
+    toggle_theme: "Alternar modo escuro"
+    
+  # Language selection
+  language:
+    select: "Selecionar Idioma"
+    english: "Inglês"
+    portuguese: "Português"
+    
+  # Todos
+  todos:
+    title: "Minhas Tarefas"
+    subtitle: "Mantenha-se organizado e produtivo"
+    new: "Nova Tarefa"
+    edit: "Editar Tarefa"
+    delete: "Excluir"
+    complete: "Marcar como concluída"
+    incomplete: "Marcar como pendente"
+    overdue_warning: "Você tem %{count} tarefa atrasada"
+    overdue_warning_plural: "Você tem %{count} tarefas atrasadas"
+    
+    # Empty state
+    empty:
+      title: "Nenhuma tarefa ainda"
+      text: "Crie sua primeira tarefa para começar"
+      action: "Criar Tarefa"
+      
+    # Form
+    form:
+      title_label: "Título"
+      title_placeholder: "O que você precisa fazer?"
+      description_label: "Descrição"
+      description_placeholder: "Adicione mais detalhes (opcional)"
+      due_date_label: "Data de Vencimento"
+      priority_label: "Prioridade"
+      priority_low: "Baixa"
+      priority_medium: "Média"
+      priority_high: "Alta"
+      save: "Salvar Tarefa"
+      cancel: "Cancelar"
+      
+    # Actions
+    actions:
+      created: "Tarefa foi criada com sucesso."
+      updated: "Tarefa foi atualizada com sucesso."
+      deleted: "Tarefa foi excluída com sucesso."

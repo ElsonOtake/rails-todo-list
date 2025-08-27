@@ -1,8 +1,8 @@
 <div class="form-container">
   <div class="form-card">
     <div class="form-header">
-      <h1 class="form-title">Edit Todo</h1>
-      <p class="form-subtitle">Update your task details</p>
+      <h1 class="form-title"><%= t('todos.edit') %></h1>
+      <p class="form-subtitle"><%= t('todos.subtitle') %></p>
     </div>
 
     <%= render "form", todo: @todo %>

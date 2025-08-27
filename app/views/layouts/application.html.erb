@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html data-theme="light">
   <head>
-    <title><%= content_for(:title) || "Todo List - Organize Your Tasks" %></title>
+    <title><%= content_for(:title) || t('app.title') %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
@@ -31,14 +31,36 @@
               <svg class="logo-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
               </svg>
-              <span class="logo-text">Todo List</span>
+              <span class="logo-text"><%= t('app.name') %></span>
             <% end %>
             
             <div class="nav-links">
-              <%= link_to "All Todos", todos_path, class: "nav-link" %>
+              <%= link_to t('nav.all_todos'), todos_path, class: "nav-link" %>
+              
+              <!-- Language Selector -->
+              <div class="language-selector" data-controller="language">
+                <button class="language-toggle" data-action="click->language#toggle" title="<%= t('language.select') %>">
+                  <% if I18n.locale == :pt %>
+                    🇧🇷
+                  <% else %>
+                    🇬🇧
+                  <% end %>
+                  <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </button>
+                <div class="language-dropdown hidden" data-language-target="dropdown">
+                  <button data-action="click->language#selectLanguage" data-locale="en" class="language-option">
+                    🇬🇧 <%= t('language.english') %>
+                  </button>
+                  <button data-action="click->language#selectLanguage" data-locale="pt" class="language-option">
+                    🇧🇷 <%= t('language.portuguese') %>
+                  </button>
+                </div>
+              </div>
               
               <!-- Dark Mode Toggle -->
-              <button class="theme-toggle" data-controller="theme" data-action="click->theme#toggle" title="Toggle dark mode">
+              <button class="theme-toggle" data-controller="theme" data-action="click->theme#toggle" title="<%= t('nav.toggle_theme') %>">
                 <svg class="moon-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                 </svg>
@@ -51,7 +73,7 @@
                 <svg class="btn-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                 </svg>
-                New Todo
+                <%= t('nav.new_todo') %>
               <% end %>
             </div>
           </div>
@@ -78,7 +100,7 @@
 
       <footer class="footer">
         <div class="container">
-          <p>&copy; <%= Date.current.year %> Todo List App. Built with Rails & Love.</p>
+          <p>&copy; <%= Date.current.year %> <%= t('app.footer') %></p>
         </div>
       </footer>
     </div>

@@ -1,6 +1,6 @@
 <div class="page-header">
-  <h1 class="page-title">My Todos</h1>
-  <p class="page-subtitle">Stay organized and productive</p>
+  <h1 class="page-title"><%= t('todos.title') %></h1>
+  <p class="page-subtitle"><%= t('todos.subtitle') %></p>
 </div>
 
 <% if @overdue_todos.any? %>
@@ -8,7 +8,7 @@
     <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
     </svg>
-    <span>You have <%= pluralize(@overdue_todos.count, "overdue task") %></span>
+    <span><%= t('todos.overdue_warning', count: @overdue_todos.count) %></span>
   </div>
 <% end %>
 
@@ -24,9 +24,9 @@
       <svg class="empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
       </svg>
-      <h3 class="empty-title">No todos yet</h3>
-      <p class="empty-text">Create your first todo to get started</p>
-      <%= link_to "Create Todo", new_todo_path, class: "btn-primary mt-4" %>
+      <h3 class="empty-title"><%= t('todos.empty.title') %></h3>
+      <p class="empty-text"><%= t('todos.empty.text') %></p>
+      <%= link_to t('todos.empty.action'), new_todo_path, class: "btn-primary mt-4" %>
     </div>
   <% end %>
 </div>
