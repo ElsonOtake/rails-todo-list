@@ -617,6 +617,50 @@ textarea.form-input {
   }
 }
 
+/* Language Selector */
+.language-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-right: 1rem;
+}
+
+.language-flag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.language-flag:hover {
+  background: var(--gray-50);
+  border-color: var(--primary);
+  transform: scale(1.05);
+}
+
+.language-flag.active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  transform: scale(1.1);
+}
+
+.flag-icon {
+  border-radius: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.language-flag:hover .flag-icon {
+  transform: scale(1.1);
+}
+
 /* Dark Mode Toggle */
 .theme-toggle {
   display: flex;
