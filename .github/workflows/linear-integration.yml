@@ -5,7 +5,8 @@ name: Linear Integration Workflow
 on:
   repository_dispatch:
     types: 
-      - linear_to_github_issue_event  # Main event type from n8n
+      - linear_to_github_issue_event  # Create GitHub issue from Linear
+      - linear_to_github_pr_event     # Create GitHub PR from Linear
       - linear_issue_created   # When new issue is created
       - linear_issue_updated   # When issue is updated
       - linear_issue_completed # When issue is marked complete
@@ -491,5 +492,218 @@ jobs:
           echo "🏷️ Labels:"
           echo '${{ toJson(github.event.client_payload.labels) }}' | jq -r '.[]'
           echo ""
+
+  # Job 7: Process Linear PR creation events
+  process-linear-pr:
+    if: |
+      github.event.action == 'linear_to_github_pr_event' && 
+      contains(github.event.client_payload.labels, 'Ready for Claude')
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      pr_url: ${{ steps.create-pr.outputs.pr_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Create and setup branch
+        id: create-branch
+        run: |
+          # Extract issue ID and team from Linear data
+          ISSUE_ID="${{ github.event.client_payload.issueId }}"
+          TEAM="${{ github.event.client_payload.team }}"
+          SHORT_ID=$(echo "$ISSUE_ID" | cut -d'-' -f1-2)
+          
+          # Determine branch name based on issue type
+          ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
+          LABELS='${{ toJson(github.event.client_payload.labels) }}'
+          
+          if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "$LABELS" == *"Bug"* ]] || [[ "$LABELS" == *"bug"* ]]; then
+            BRANCH_NAME="fix/${TEAM,,}-${SHORT_ID}"
+          elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "$LABELS" == *"feature"* ]] || [[ "$LABELS" == *"Feature"* ]]; then
+            BRANCH_NAME="feature/${TEAM,,}-${SHORT_ID}"
+          else
+            BRANCH_NAME="refactor/${TEAM,,}-${SHORT_ID}"
+          fi
+          
+          echo "Branch name: $BRANCH_NAME"
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          
+          # Configure git
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Fetch all branches to ensure we have latest state
+          git fetch origin
+          
+          # Check if branch exists remotely
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+            echo "Branch $BRANCH_NAME exists remotely, fetching and resetting"
+            git fetch origin "$BRANCH_NAME":"$BRANCH_NAME"
+            git checkout "$BRANCH_NAME"
+            git reset --hard origin/main
+            git branch --set-upstream-to=origin/"$BRANCH_NAME" "$BRANCH_NAME"
+          else
+            echo "Creating new branch $BRANCH_NAME"
+            git checkout -b "$BRANCH_NAME"
+          fi
+          
+      - name: Create placeholder file for PR
+        run: |
+          # Create a placeholder file to have something to commit
+          ISSUE_ID="${{ github.event.client_payload.issueId }}"
+          SHORT_ID=$(echo "$ISSUE_ID" | cut -d'-' -f1-2)
+          
+          cat > .linear-pr-${SHORT_ID}.md << 'EOF'
+          # Linear Issue: ${{ github.event.client_payload.title }}
+          
+          **Issue ID**: ${{ github.event.client_payload.issueId }}
+          **Team**: ${{ github.event.client_payload.team }}
+          **Priority**: P${{ github.event.client_payload.priority }}
+          **Linear URL**: ${{ github.event.client_payload.url }}
+          
+          ## Description
+          ${{ github.event.client_payload.description }}
+          
+          ---
+          *This file was auto-generated from Linear and will be removed when the implementation is complete.*
+          EOF
+          
+          git add .linear-pr-*.md
+          git commit -m "Add Linear issue ${{ github.event.client_payload.issueId }} for implementation"
+          
+      - name: Push branch
+        run: |
+          git push --force origin ${{ steps.create-branch.outputs.branch_name }}
+
+      - name: Create Pull Request
+        id: create-pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Prepare PR body with template
+          PR_BODY=$(cat <<'EOF'
+          ## O que esse PR faz?
+          
+          ${{ github.event.client_payload.description }}
+          
+          ---
+          
+          **Linear Issue**: [${{ github.event.client_payload.title }}](${{ github.event.client_payload.url }})
+          **Issue ID**: ${{ github.event.client_payload.issueId }}
+          **Team**: ${{ github.event.client_payload.team }}
+          **Priority**: P${{ github.event.client_payload.priority }}
+          
+          ## Tipo de mudança
+          
+          [//]: # 'Apague o que não for relevante.'
+          
+          - [ ] Bug (correção)
+          - [ ] Nova funcionalidade (cria uma nova funcionalidade para o cliente)
+          - [ ] Mudança de funcionalidade (muda a forma como uma funcionalidade atual funciona)
+          
+          ## Checklist:
+          
+          - [ ] Atualizei a planilha de permissões de usuários ([RBAC](https://docs.google.com/spreadsheets/d/1GkAj7nF1M7T3ggCvbGlsjvsUYGgT8OkFZU0L_dF1ka8/edit?gid=0#gid=0))
+          - [ ] Atualizei a planilha de suporte a provedores financeiros oferecido pela Kobana ([SPRF](https://docs.google.com/spreadsheets/d/1NkceBPXPufOhz4lRZiGF03bV_fEtTQ6uaIwUhIYdKZg/edit?pli=1&gid=0#gid=0))
+          - [ ] Adicionei novo campo/model no manage/admin
+          - [ ] Adicionei novo campo/model no spec/swaggers para documentar na API
+          - [ ] Notifiquei o suporte sobre mudança no menu de acesso dos clientes (Ordem, Nome, Local)
+          - [ ] Precisa de atualizações nas documentações e tutoriais
+          - [ ] Precisa rodar uma tarefa(app/tasks) após o deploy
+          
+          ## Screenshots:
+          EOF
+          )
+          
+          # Create the PR
+          PR_TITLE="${{ github.event.client_payload.title }}"
+          
+          gh pr create \
+            --title "$PR_TITLE" \
+            --body "$PR_BODY" \
+            --base main \
+            --head "${{ steps.create-branch.outputs.branch_name }}" \
+            --label "linear-integration" \
+            --label "ready-for-claude"
+          
+          # Get PR number and URL
+          PR_INFO=$(gh pr list --head "${{ steps.create-branch.outputs.branch_name }}" --json number,url --jq '.[0]')
+          PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
+          PR_URL=$(echo "$PR_INFO" | jq -r '.url')
+          
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "✅ Created PR #$PR_NUMBER: $PR_URL"
+
+  # Job 8: Add Claude comment to PR
+  comment-on-pr:
+    if: needs.process-linear-pr.outputs.pr_number != ''
+    needs: [process-linear-pr]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Add Claude comment to PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.process-linear-pr.outputs.pr_number }}
+        run: |
+          echo "📝 Adding Claude comment to PR #$PR_NUMBER"
+          
+          COMMENT_BODY="@claude implement this feature based on the PR description"
+          
+          gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
+          echo "✅ Added Claude comment to PR #$PR_NUMBER"
+
+  # Job 9: Remove "Ready for Claude" label from Linear
+  update-linear-pr:
+    if: needs.process-linear-pr.outputs.pr_url != ''
+    needs: process-linear-pr
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update Linear issue
+        env:
+          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
+        run: |
+          ISSUE_ID="${{ github.event.client_payload.issueId }}"
+          PR_URL="${{ needs.process-linear-pr.outputs.pr_url }}"
+          
+          echo "🔄 Updating Linear issue $ISSUE_ID"
+          
+          # GraphQL mutation to remove label and add comment
+          MUTATION='mutation UpdateIssue($issueId: String!, $labelIds: [String!]) {
+            issueRemoveLabel(id: $issueId, labelId: "ready-for-claude") {
+              success
+            }
+            commentCreate(input: {
+              issueId: $issueId,
+              body: "🤖 GitHub PR created: '"$PR_URL"'"
+            }) {
+              success
+            }
+          }'
+          
+          # Get current labels and remove "Ready for Claude"
+          CURRENT_LABELS='${{ toJson(github.event.client_payload.labelIds) }}'
+          UPDATED_LABELS=$(echo "$CURRENT_LABELS" | jq '. - ["ready-for-claude"]')
+          
+          # Execute the GraphQL mutation
+          curl -X POST https://api.linear.app/graphql \
+            -H "Authorization: $LINEAR_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "'"$MUTATION"'",
+              "variables": {
+                "issueId": "'"$ISSUE_ID"'",
+                "labelIds": '"$UPDATED_LABELS"'
+              }
+            }'
+          
+          echo "✅ Updated Linear issue and removed 'Ready for Claude' label"
           echo "📝 Description:"
           echo "${{ github.event.client_payload.description }}"
