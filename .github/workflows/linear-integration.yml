@@ -626,9 +626,7 @@ jobs:
             --title "$PR_TITLE" \
             --body "$PR_BODY" \
             --base main \
-            --head "${{ steps.create-branch.outputs.branch_name }}" \
-            --label "linear-integration" \
-            --label "ready-for-claude"
+            --head "${{ steps.create-branch.outputs.branch_name }}"
           
           # Get PR number and URL
           PR_INFO=$(gh pr list --head "${{ steps.create-branch.outputs.branch_name }}" --json number,url --jq '.[0]')
