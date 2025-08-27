@@ -22,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          token: ${{ github.token }}
         
       - name: Create refactoring branch
         id: create-branch
@@ -278,7 +280,7 @@ jobs:
           Priority: P${{ github.event.client_payload.priority }}
           Labels: ${{ join(github.event.client_payload.labels, ', ') }}"
           
-          git push origin ${{ steps.create-branch.outputs.branch_name }}
+          git push --force-with-lease origin ${{ steps.create-branch.outputs.branch_name }}
           
       - name: Create GitHub issue
         id: create-issue
