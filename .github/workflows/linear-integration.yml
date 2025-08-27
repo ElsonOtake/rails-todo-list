@@ -54,10 +54,22 @@ jobs:
           echo "Branch name: $BRANCH_NAME"
           echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           
-          # Create and checkout branch
+          # Configure git
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git checkout -b "$BRANCH_NAME"
+          
+          # Fetch all branches to ensure we have latest state
+          git fetch origin
+          
+          # Check if branch exists remotely
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME" >/dev/null 2>&1; then
+            echo "Branch $BRANCH_NAME exists remotely, checking out and resetting"
+            git checkout "$BRANCH_NAME"
+            git reset --hard origin/main
+          else
+            echo "Creating new branch $BRANCH_NAME"
+            git checkout -b "$BRANCH_NAME"
+          fi
           
       - name: Generate Claude instructions
         run: |
@@ -280,7 +292,7 @@ jobs:
           Priority: P${{ github.event.client_payload.priority }}
           Labels: ${{ join(github.event.client_payload.labels, ', ') }}"
           
-          git push --force-with-lease origin ${{ steps.create-branch.outputs.branch_name }}
+          git push --force origin ${{ steps.create-branch.outputs.branch_name }}
           
       - name: Create GitHub issue
         id: create-issue
