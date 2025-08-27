@@ -17,8 +17,8 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       branch_name: ${{ steps.create-branch.outputs.branch_name }}
-      pr_url: ${{ steps.create-pr.outputs.pr_url }}
-      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      issue_url: ${{ steps.create-issue.outputs.issue_url }}
+      issue_number: ${{ steps.create-issue.outputs.issue_number }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -280,18 +280,19 @@ jobs:
           
           git push origin ${{ steps.create-branch.outputs.branch_name }}
           
-      - name: Create pull request
-        id: create-pr
+      - name: Create GitHub issue
+        id: create-issue
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          PR_BODY="## Linear Issue: ${{ github.event.client_payload.title }}
+          ISSUE_BODY="## Linear Issue: ${{ github.event.client_payload.title }}
           
           ### Details
           - **Team**: ${{ github.event.client_payload.team }}
           - **Priority**: P${{ github.event.client_payload.priority }}
           - **Estimate**: ${{ github.event.client_payload.estimate }} points
           - **Linear URL**: ${{ github.event.client_payload.url }}
+          - **Branch**: \`${{ steps.create-branch.outputs.branch_name }}\`
           
           ### Issue Type: ${{ github.event.client_payload.sections.type }}
           
@@ -299,48 +300,29 @@ jobs:
           
           **Expected Behavior**: ${{ github.event.client_payload.sections.expectedBehavior }}
           
-          ### Next Steps
-          1. Review the \`refactoring-instructions.md\` file
-          2. Use Claude Code to implement the fix/refactor
-          3. Ensure all tests pass
-          4. Update this PR with your changes
+          ### Implementation Instructions
+          1. Check out the branch: \`git checkout ${{ steps.create-branch.outputs.branch_name }}\`
+          2. Review the \`refactoring-instructions.md\` file
+          3. Use Claude Code to implement the fix/refactor
+          4. Ensure all tests pass
+          5. Create a PR with your changes
           
           ---
-          *This PR was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
+          *This issue was automatically created from Linear issue ${{ github.event.client_payload.issueId }}*"
           
-          PR_URL=$(gh pr create \
+          ISSUE_URL=$(gh issue create \
             --title "[${{ github.event.client_payload.team }}] ${{ github.event.client_payload.title }}" \
-            --body "$PR_BODY" \
-            --head ${{ steps.create-branch.outputs.branch_name }} \
-            --base main \
+            --body "$ISSUE_BODY" \
             --label "linear-integration" \
             --label "needs-claude")
           
-          echo "PR created: $PR_URL"
-          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
+          echo "Issue created: $ISSUE_URL"
+          echo "issue_url=$ISSUE_URL" >> $GITHUB_OUTPUT
           
-          # Extract PR number from URL
-          PR_NUMBER=$(echo "$PR_URL" | grep -oE '[0-9]+$')
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          # Extract issue number from URL
+          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -oE '[0-9]+$')
+          echo "issue_number=$ISSUE_NUMBER" >> $GITHUB_OUTPUT
       
-      - name: Add Claude comment to PR
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: |
-          # Determine the appropriate message based on issue type
-          ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
-          LABELS='${{ toJson(github.event.client_payload.labels) }}'
-          
-          if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "$LABELS" == *"Bug"* ]] || [[ "$LABELS" == *"bug"* ]]; then
-            COMMENT_BODY="@claude Fix this bug based on the issue description and the instructions in \`refactoring-instructions.md\`"
-          elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "$LABELS" == *"feature"* ]] || [[ "$LABELS" == *"Feature"* ]]; then
-            COMMENT_BODY="@claude Implement this feature based on the issue description and the requirements in \`refactoring-instructions.md\`"
-          else
-            COMMENT_BODY="@claude Implement this based on the issue description and the guidelines in \`refactoring-instructions.md\`"
-          fi
-          
-          gh pr comment ${{ steps.create-pr.outputs.pr_number }} --body "$COMMENT_BODY"
-          echo "✅ Added Claude comment to PR #${{ steps.create-pr.outputs.pr_number }}"
 
   # Job 2: Handle bug issues specifically
   handle-bugs:
@@ -380,8 +362,8 @@ jobs:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           ISSUE_ID: ${{ github.event.client_payload.issueId }}
           BRANCH_NAME: ${{ needs.process-claude-ready.outputs.branch_name }}
-          PR_URL: ${{ needs.process-claude-ready.outputs.pr_url }}
-          PR_NUMBER: ${{ needs.process-claude-ready.outputs.pr_number }}
+          ISSUE_URL: ${{ needs.process-claude-ready.outputs.issue_url }}
+          ISSUE_NUMBER: ${{ needs.process-claude-ready.outputs.issue_number }}
         run: |
           echo "📝 Updating Linear issue status"
           
@@ -428,7 +410,7 @@ jobs:
               -H "Content-Type: application/json" \
               https://api.linear.app/graphql \
               -d "{
-                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nPull Request: $PR_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe PR has been created and Claude has been mentioned to implement the changes. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the PR comments where @claude has been mentioned\\n3. Claude Code will implement the changes\\n4. Push changes to the PR\\\" }) { success } }\"
+                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nGitHub Issue: $ISSUE_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe GitHub issue has been created and Claude will be mentioned to implement the changes. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the GitHub issue where @claude will be mentioned\\n3. Claude Code will implement the changes\\n4. Create a PR with the changes\\\" }) { success } }\"
               }")
             
             echo "Comment creation response: $COMMENT_RESPONSE"
@@ -437,7 +419,35 @@ jobs:
             echo "API Response: $RESPONSE"
           fi
 
-  # Job 4: Debug - Show all received data
+  # Job 4: Add Claude comment to the created GitHub issue
+  comment-on-issue:
+    runs-on: ubuntu-latest
+    if: needs.process-claude-ready.outputs.issue_number != ''
+    needs: [process-claude-ready, update-linear]
+    steps:
+      - name: Add Claude comment to issue
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ needs.process-claude-ready.outputs.issue_number }}
+        run: |
+          echo "📝 Adding Claude comment to GitHub issue #$ISSUE_NUMBER"
+          
+          # Determine the appropriate message based on issue type
+          ISSUE_TYPE="${{ github.event.client_payload.sections.type }}"
+          LABELS='${{ toJson(github.event.client_payload.labels) }}'
+          
+          if [[ "$ISSUE_TYPE" == "bug" ]] || [[ "$LABELS" == *"Bug"* ]] || [[ "$LABELS" == *"bug"* ]]; then
+            COMMENT_BODY="@claude Fix this bug based on the issue description and the instructions in \`refactoring-instructions.md\`"
+          elif [[ "$ISSUE_TYPE" == "feature" ]] || [[ "$LABELS" == *"feature"* ]] || [[ "$LABELS" == *"Feature"* ]]; then
+            COMMENT_BODY="@claude Implement this feature based on the issue description and the requirements in \`refactoring-instructions.md\`"
+          else
+            COMMENT_BODY="@claude Implement this based on the issue description and the guidelines in \`refactoring-instructions.md\`"
+          fi
+          
+          gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+          echo "✅ Added Claude comment to issue #$ISSUE_NUMBER"
+
+  # Job 5: Debug - Show all received data
   debug-payload:
     runs-on: ubuntu-latest
     if: ${{ github.event.client_payload != '' }}
