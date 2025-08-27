@@ -280,7 +280,7 @@ jobs:
           Priority: P${{ github.event.client_payload.priority }}
           Labels: ${{ join(github.event.client_payload.labels, ', ') }}"
           
-          git push --force-with-lease origin ${{ steps.create-branch.outputs.branch_name }}
+          git push --force origin ${{ steps.create-branch.outputs.branch_name }}
           
       - name: Create GitHub issue
         id: create-issue
