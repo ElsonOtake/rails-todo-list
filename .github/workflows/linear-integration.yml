@@ -654,7 +654,9 @@ jobs:
 
   # Job 8: Add Claude comment to PR
   comment-on-pr:
-    if: needs.process-linear-pr.outputs.pr_number != ''
+    if: |
+      needs.process-linear-pr.result == 'success' &&
+      needs.update-linear.result == 'success'
     needs: [process-linear-pr, update-linear]
     runs-on: ubuntu-latest
     steps:
@@ -665,7 +667,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ needs.process-linear-pr.outputs.pr_number }}
+          BRANCH_NAME: ${{ needs.process-linear-pr.outputs.branch_name }}
         run: |
+          # If PR_NUMBER is empty, try to find it from the branch
+          if [ -z "$PR_NUMBER" ]; then
+            echo "PR_NUMBER is empty, trying to find PR from branch $BRANCH_NAME"
+            PR_INFO=$(gh pr list --head "$BRANCH_NAME" --json number --jq '.[0].number')
+            if [ -n "$PR_INFO" ]; then
+              PR_NUMBER="$PR_INFO"
+              echo "Found PR #$PR_NUMBER for branch $BRANCH_NAME"
+            else
+              echo "❌ Could not find PR for branch $BRANCH_NAME"
+              exit 1
+            fi
+          fi
+          
           echo "📝 Adding Claude comment to PR #$PR_NUMBER"
           
           COMMENT_BODY="@claude implement this feature based on the PR description"
