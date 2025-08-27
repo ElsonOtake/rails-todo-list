@@ -700,4 +700,122 @@ textarea.form-input {
     height: 2.25rem;
     margin-right: 0.5rem;
   }
+  
+  .language-selector {
+    margin-right: 0.5rem;
+  }
+  
+  .language-selector .dropdown-menu {
+    min-width: 140px;
+  }
+  
+  .language-selector .flag-icon {
+    width: 18px;
+    height: 12px;
+  }
+}
+
+/* Language Selector */
+.language-selector {
+  position: relative;
+  margin-right: 1rem;
+}
+
+.language-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 4rem;
+}
+
+.language-toggle:hover {
+  background: var(--gray-50);
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: scale(1.05);
+}
+
+.flag-icon {
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.dropdown.show .dropdown-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  box-shadow: 0 8px 24px var(--shadow-hover);
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.2s ease;
+  min-width: 160px;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  margin: 0.25rem;
+}
+
+.dropdown-item:first-child {
+  border-radius: 0.5rem 0.5rem 0.25rem 0.25rem;
+}
+
+.dropdown-item:last-child {
+  border-radius: 0.25rem 0.25rem 0.5rem 0.5rem;
+}
+
+.dropdown-item:hover {
+  background: var(--gray-50);
+}
+
+.dropdown-item.active {
+  background: var(--primary);
+  color: white;
+}
+
+.dropdown-item.active:hover {
+  background: var(--primary-dark);
 }

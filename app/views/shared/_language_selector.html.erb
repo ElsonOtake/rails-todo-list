@@ -1,0 +1,71 @@
+<div class="language-selector" data-controller="language">
+  <div class="dropdown">
+    <button class="language-toggle" data-action="click->language#toggle" title="<%= t('language.selector.title') %>">
+      <% if I18n.locale == :pt %>
+        <!-- Brazilian Flag -->
+        <svg class="flag-icon" viewBox="0 0 24 16" fill="none">
+          <rect width="24" height="16" fill="#009639" rx="1"/>
+          <circle cx="12" cy="8" r="4.5" fill="#FFCC02"/>
+          <path d="M8 8.5 C8 8.5, 10 6.5, 16 8.5 C16 8.5, 14 9.5, 8 8.5 Z" fill="#002776"/>
+        </svg>
+      <% else %>
+        <!-- UK Flag -->
+        <svg class="flag-icon" viewBox="0 0 24 16" fill="none">
+          <rect width="24" height="16" fill="#012169" rx="1"/>
+          <path d="M0 0 L8 5.33 L0 10.67 V0 Z" fill="white"/>
+          <path d="M24 0 L16 5.33 L24 10.67 V0 Z" fill="white"/>
+          <path d="M0 16 L8 10.67 L0 5.33 V16 Z" fill="white"/>
+          <path d="M24 16 L16 10.67 L24 5.33 V16 Z" fill="white"/>
+          <rect width="24" height="3.2" y="6.4" fill="white"/>
+          <rect width="4.8" height="16" x="9.6" fill="white"/>
+          <rect width="24" height="1.6" y="7.2" fill="#C8102E"/>
+          <rect width="2.4" height="16" x="10.8" fill="#C8102E"/>
+          <path d="M0 0 L8 5.33 L0 10.67" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M24 0 L16 5.33 L24 10.67" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M0 16 L8 10.67 L0 5.33" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M24 16 L16 10.67 L24 5.33" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+        </svg>
+      <% end %>
+      
+      <svg class="dropdown-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+    
+    <div class="dropdown-menu" data-language-target="menu">
+      <%= link_to change_language_path(locale: :en), 
+          method: :patch, 
+          class: "dropdown-item #{'active' if I18n.locale == :en}", 
+          data: { turbo_method: :patch } do %>
+        <svg class="flag-icon" viewBox="0 0 24 16" fill="none">
+          <rect width="24" height="16" fill="#012169" rx="1"/>
+          <path d="M0 0 L8 5.33 L0 10.67 V0 Z" fill="white"/>
+          <path d="M24 0 L16 5.33 L24 10.67 V0 Z" fill="white"/>
+          <path d="M0 16 L8 10.67 L0 5.33 V16 Z" fill="white"/>
+          <path d="M24 16 L16 10.67 L24 5.33 V16 Z" fill="white"/>
+          <rect width="24" height="3.2" y="6.4" fill="white"/>
+          <rect width="4.8" height="16" x="9.6" fill="white"/>
+          <rect width="24" height="1.6" y="7.2" fill="#C8102E"/>
+          <rect width="2.4" height="16" x="10.8" fill="#C8102E"/>
+          <path d="M0 0 L8 5.33 L0 10.67" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M24 0 L16 5.33 L24 10.67" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M0 16 L8 10.67 L0 5.33" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+          <path d="M24 16 L16 10.67 L24 5.33" stroke="#C8102E" stroke-width="0.8" fill="none"/>
+        </svg>
+        <%= t('language.selector.english') %>
+      <% end %>
+      
+      <%= link_to change_language_path(locale: :pt), 
+          method: :patch, 
+          class: "dropdown-item #{'active' if I18n.locale == :pt}", 
+          data: { turbo_method: :patch } do %>
+        <svg class="flag-icon" viewBox="0 0 24 16" fill="none">
+          <rect width="24" height="16" fill="#009639" rx="1"/>
+          <circle cx="12" cy="8" r="4.5" fill="#FFCC02"/>
+          <path d="M8 8.5 C8 8.5, 10 6.5, 16 8.5 C16 8.5, 14 9.5, 8 8.5 Z" fill="#002776"/>
+        </svg>
+        <%= t('language.selector.portuguese') %>
+      <% end %>
+    </div>
+  </div>
+</div>

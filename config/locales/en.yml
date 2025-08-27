@@ -29,3 +29,75 @@
 
 en:
   hello: "Hello world"
+  
+  app:
+    name: "Todo List"
+    title: "Todo List - Organize Your Tasks"
+    tagline: "Built with Rails & Love."
+  
+  navigation:
+    all_todos: "All Todos"
+    new_todo: "New Todo"
+    toggle_theme: "Toggle dark mode"
+  
+  todos:
+    index:
+      title: "My Todos"
+      subtitle: "Stay organized and productive"
+      overdue_tasks:
+        one: "You have %{count} overdue task"
+        other: "You have %{count} overdue tasks"
+      empty:
+        title: "No todos yet"
+        text: "Create your first todo to get started"
+        action: "Create Todo"
+    
+    form:
+      errors:
+        title: "Please fix the following errors:"
+      fields:
+        title: "Title"
+        title_placeholder: "Enter todo title..."
+        description: "Description"
+        description_placeholder: "Add a description (optional)..."
+        priority: "Priority"
+        priority_placeholder: "Select priority..."
+        due_date: "Due Date"
+        completed: "Mark as completed"
+      priority_options:
+        low: "Low Priority"
+        medium: "Medium Priority"
+        high: "High Priority"
+      actions:
+        save: "Save Todo"
+        update: "Update Todo"
+        cancel: "Cancel"
+    
+    new:
+      title: "New Todo"
+    
+    edit:
+      title: "Edit Todo"
+    
+    show:
+      edit: "Edit"
+      delete: "Delete"
+      back: "Back to list"
+    
+    todo:
+      edit: "Edit"
+      delete: "Delete"
+      confirm_delete: "Are you sure you want to delete this todo?"
+      completed: "Completed"
+      overdue: "Overdue"
+      due_today: "Due today"
+      priority:
+        low: "Low"
+        medium: "Medium" 
+        high: "High"
+  
+  language:
+    selector:
+      title: "Language"
+      english: "English"
+      portuguese: "Portuguese"

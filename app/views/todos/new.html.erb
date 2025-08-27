@@ -1,8 +1,8 @@
 <div class="form-container">
   <div class="form-card">
     <div class="form-header">
-      <h1 class="form-title">Create New Todo</h1>
-      <p class="form-subtitle">Add a new task to your list</p>
+      <h1 class="form-title"><%= t('todos.new.title') %></h1>
+      <p class="form-subtitle"><%= t('todos.index.empty.text') %></p>
     </div>
 
     <%= render "form", todo: @todo %>

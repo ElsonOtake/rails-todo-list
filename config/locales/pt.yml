@@ -1,0 +1,74 @@
+pt:
+  hello: "Olá mundo"
+  
+  app:
+    name: "Lista de Tarefas"
+    title: "Lista de Tarefas - Organize Suas Tarefas"
+    tagline: "Feito com Rails & Amor."
+  
+  navigation:
+    all_todos: "Todas as Tarefas"
+    new_todo: "Nova Tarefa"
+    toggle_theme: "Alternar modo escuro"
+  
+  todos:
+    index:
+      title: "Minhas Tarefas"
+      subtitle: "Mantenha-se organizado e produtivo"
+      overdue_tasks:
+        one: "Você tem %{count} tarefa atrasada"
+        other: "Você tem %{count} tarefas atrasadas"
+      empty:
+        title: "Nenhuma tarefa ainda"
+        text: "Crie sua primeira tarefa para começar"
+        action: "Criar Tarefa"
+    
+    form:
+      errors:
+        title: "Por favor, corrija os seguintes erros:"
+      fields:
+        title: "Título"
+        title_placeholder: "Digite o título da tarefa..."
+        description: "Descrição"
+        description_placeholder: "Adicione uma descrição (opcional)..."
+        priority: "Prioridade"
+        priority_placeholder: "Selecione a prioridade..."
+        due_date: "Data de Vencimento"
+        completed: "Marcar como concluída"
+      priority_options:
+        low: "Prioridade Baixa"
+        medium: "Prioridade Média"
+        high: "Prioridade Alta"
+      actions:
+        save: "Salvar Tarefa"
+        update: "Atualizar Tarefa"
+        cancel: "Cancelar"
+    
+    new:
+      title: "Nova Tarefa"
+    
+    edit:
+      title: "Editar Tarefa"
+    
+    show:
+      edit: "Editar"
+      delete: "Excluir"
+      back: "Voltar à lista"
+    
+    todo:
+      edit: "Editar"
+      delete: "Excluir"
+      confirm_delete: "Tem certeza de que deseja excluir esta tarefa?"
+      completed: "Concluída"
+      overdue: "Atrasada"
+      due_today: "Vence hoje"
+      priority:
+        low: "Baixa"
+        medium: "Média"
+        high: "Alta"
+  
+  language:
+    selector:
+      title: "Idioma"
+      english: "Inglês"
+      portuguese: "Português"
