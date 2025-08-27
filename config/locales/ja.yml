@@ -1,0 +1,48 @@
+ja:
+  hello: "こんにちは世界"
+  
+  app:
+    name: "Todo リスト"
+    tagline: "タスクを整理しよう"
+    footer: "Todo リスト アプリ。Rails と愛で作られています。"
+  
+  navigation:
+    all_todos: "すべてのTodo"
+    new_todo: "新しいTodo"
+    language_selection: "言語"
+    toggle_dark_mode: "ダークモードを切り替え"
+  
+  todos:
+    title: "私のTodo"
+    subtitle: "整理整頓して生産的に"
+    no_todos_title: "まだTodoがありません"
+    no_todos_text: "最初のTodoを作成して始めましょう"
+    create_todo: "Todoを作成"
+    edit_todo: "Todoを編集"
+    new_todo: "新しいTodo"
+    overdue_tasks:
+      one: "期限切れのタスクが%{count}個あります"
+      other: "期限切れのタスクが%{count}個あります"
+    form:
+      title: "タイトル"
+      description: "説明"
+      due_date: "期限日"
+      priority: "優先度"
+      create: "Todoを作成"
+      update: "Todoを更新"
+      cancel: "キャンセル"
+    priority:
+      low: "低"
+      medium: "中"
+      high: "高"
+    actions:
+      edit: "編集"
+      delete: "削除"
+      complete: "完了"
+      incomplete: "未完了にする"
+    notices:
+      created: "Todoが正常に作成されました。"
+      updated: "Todoが正常に更新されました。"
+      destroyed: "Todoが正常に削除されました。"
+      completed: "Todoを完了としてマークしました。"
+      reopened: "Todoを未完了としてマークしました。"
