@@ -441,6 +441,9 @@ jobs:
     if: needs.process-claude-ready.outputs.issue_number != ''
     needs: [process-claude-ready, update-linear]
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Add Claude comment to issue
         env:
           GITHUB_TOKEN: ${{ github.token }}
