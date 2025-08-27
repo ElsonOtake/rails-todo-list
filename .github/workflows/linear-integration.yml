@@ -346,7 +346,18 @@ jobs:
             COMMENT_BODY="@claude Implement this based on the issue description above"
           fi
           
-          gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+          # Use API directly if CLAUDE_TRIGGER_TOKEN is available, otherwise use gh CLI
+          if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
+            echo "Using GitHub API with PAT to create comment"
+            curl -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/comments \
+              -d "{\"body\": \"$COMMENT_BODY\"}"
+          else
+            echo "Using gh CLI to create comment (won't trigger Claude)"
+            gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+          fi
           echo "✅ Added Claude comment to issue #$ISSUE_NUMBER"
 
   # Job 5: Debug - Show all received data
@@ -566,6 +577,17 @@ jobs:
           
           COMMENT_BODY="@claude implement this feature based on the PR description"
           
-          gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
+          # Use API directly if CLAUDE_TRIGGER_TOKEN is available, otherwise use gh CLI
+          if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
+            echo "Using GitHub API with PAT to create comment"
+            curl -X POST \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
+              -d "{\"body\": \"$COMMENT_BODY\"}"
+          else
+            echo "Using gh CLI to create comment (won't trigger Claude)"
+            gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
+          fi
           echo "✅ Added Claude comment to PR #$PR_NUMBER"
 
