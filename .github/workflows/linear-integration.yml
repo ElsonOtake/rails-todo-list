@@ -346,7 +346,21 @@ jobs:
             COMMENT_BODY="@claude Implement this based on the issue description above"
           fi
           
+          # First, add a regular comment for visibility
           gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+          
+          # If CLAUDE_TRIGGER_TOKEN exists, trigger the manual workflow
+          if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
+            echo "Triggering Claude manually via workflow_dispatch"
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.CLAUDE_TRIGGER_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/actions/workflows/claude-manual-trigger.yml/dispatches \
+              -d "{\"ref\": \"main\", \"inputs\": {\"issue_number\": \"$ISSUE_NUMBER\", \"comment_body\": \"$COMMENT_BODY\"}}"
+            echo "✅ Triggered Claude workflow for issue #$ISSUE_NUMBER"
+          else
+            echo "⚠️ CLAUDE_TRIGGER_TOKEN not set - Claude won't be triggered automatically"
+          fi
           echo "✅ Added Claude comment to issue #$ISSUE_NUMBER"
 
   # Job 5: Debug - Show all received data
@@ -566,6 +580,19 @@ jobs:
           
           COMMENT_BODY="@claude implement this feature based on the PR description"
           
+          # First, add a regular comment for visibility
           gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
-          echo "✅ Added Claude comment to PR #$PR_NUMBER"
+          
+          # If CLAUDE_TRIGGER_TOKEN exists, trigger the manual workflow
+          if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
+            echo "Triggering Claude manually via workflow_dispatch"
+            curl -X POST \
+              -H "Authorization: token ${{ secrets.CLAUDE_TRIGGER_TOKEN }}" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/${{ github.repository }}/actions/workflows/claude-manual-trigger.yml/dispatches \
+              -d "{\"ref\": \"main\", \"inputs\": {\"pr_number\": \"$PR_NUMBER\", \"comment_body\": \"$COMMENT_BODY\"}}"
+            echo "✅ Triggered Claude workflow for PR #$PR_NUMBER"
+          else
+            echo "⚠️ CLAUDE_TRIGGER_TOKEN not set - Claude won't be triggered automatically"
+          fi
 
