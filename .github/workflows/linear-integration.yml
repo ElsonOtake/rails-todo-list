@@ -501,19 +501,33 @@ jobs:
           EOF
           )
           
-          # Create the PR
-          PR_TITLE="${{ github.event.client_payload.title }}"
+          # Check if PR already exists for this branch
+          EXISTING_PR=$(gh pr list --head "${{ steps.create-branch.outputs.branch_name }}" --json number,url --jq '.[0]')
           
-          gh pr create \
-            --title "$PR_TITLE" \
-            --body "$PR_BODY" \
-            --base main \
-            --head "${{ steps.create-branch.outputs.branch_name }}"
-          
-          # Get PR number and URL
-          PR_INFO=$(gh pr list --head "${{ steps.create-branch.outputs.branch_name }}" --json number,url --jq '.[0]')
-          PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
-          PR_URL=$(echo "$PR_INFO" | jq -r '.url')
+          if [ -n "$EXISTING_PR" ] && [ "$EXISTING_PR" != "null" ]; then
+            echo "PR already exists for branch ${{ steps.create-branch.outputs.branch_name }}"
+            PR_NUMBER=$(echo "$EXISTING_PR" | jq -r '.number')
+            PR_URL=$(echo "$EXISTING_PR" | jq -r '.url')
+            echo "Using existing PR #$PR_NUMBER: $PR_URL"
+            
+            # Update the PR body with the new template
+            gh pr edit $PR_NUMBER --body "$PR_BODY"
+            echo "Updated PR body with latest template"
+          else
+            # Create new PR
+            PR_TITLE="${{ github.event.client_payload.title }}"
+            
+            gh pr create \
+              --title "$PR_TITLE" \
+              --body "$PR_BODY" \
+              --base main \
+              --head "${{ steps.create-branch.outputs.branch_name }}"
+            
+            # Get PR number and URL
+            PR_INFO=$(gh pr list --head "${{ steps.create-branch.outputs.branch_name }}" --json number,url --jq '.[0]')
+            PR_NUMBER=$(echo "$PR_INFO" | jq -r '.number')
+            PR_URL=$(echo "$PR_INFO" | jq -r '.url')
+          fi
           
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
