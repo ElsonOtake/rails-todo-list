@@ -329,7 +329,7 @@ jobs:
         
       - name: Add Claude comment to issue
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_TRIGGER_TOKEN || github.token }}
           ISSUE_NUMBER: ${{ needs.process-claude-ready.outputs.issue_number }}
         run: |
           echo "📝 Adding Claude comment to GitHub issue #$ISSUE_NUMBER"
@@ -346,22 +346,20 @@ jobs:
             COMMENT_BODY="@claude Implement this based on the issue description above"
           fi
           
-          # First, add a regular comment for visibility
-          gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
-          
-          # If CLAUDE_TRIGGER_TOKEN exists, trigger the manual workflow
+          # Use API directly if CLAUDE_TRIGGER_TOKEN is available
           if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
-            echo "Triggering Claude manually via workflow_dispatch"
+            echo "Using GitHub API with PAT to create comment"
             curl -X POST \
-              -H "Authorization: token ${{ secrets.CLAUDE_TRIGGER_TOKEN }}" \
+              -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/${{ github.repository }}/actions/workflows/claude-manual-trigger.yml/dispatches \
-              -d "{\"ref\": \"main\", \"inputs\": {\"issue_number\": \"$ISSUE_NUMBER\", \"comment_body\": \"$COMMENT_BODY\"}}"
-            echo "✅ Triggered Claude workflow for issue #$ISSUE_NUMBER"
+              https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER/comments \
+              -d "{\"body\": \"$COMMENT_BODY\"}"
+            echo "✅ Created comment using PAT"
           else
-            echo "⚠️ CLAUDE_TRIGGER_TOKEN not set - Claude won't be triggered automatically"
+            echo "Using gh CLI to create comment"
+            gh issue comment $ISSUE_NUMBER --body "$COMMENT_BODY"
+            echo "✅ Created comment (may not trigger Claude without PAT)"
           fi
-          echo "✅ Added Claude comment to issue #$ISSUE_NUMBER"
 
   # Job 5: Debug - Show all received data
   debug-payload:
@@ -559,7 +557,7 @@ jobs:
         
       - name: Add Claude comment to PR
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CLAUDE_TRIGGER_TOKEN || secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ needs.process-linear-pr.outputs.pr_number }}
           BRANCH_NAME: ${{ needs.process-linear-pr.outputs.branch_name }}
         run: |
@@ -580,19 +578,18 @@ jobs:
           
           COMMENT_BODY="@claude implement this feature based on the PR description"
           
-          # First, add a regular comment for visibility
-          gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
-          
-          # If CLAUDE_TRIGGER_TOKEN exists, trigger the manual workflow
+          # Use API directly if CLAUDE_TRIGGER_TOKEN is available
           if [ -n "${{ secrets.CLAUDE_TRIGGER_TOKEN }}" ]; then
-            echo "Triggering Claude manually via workflow_dispatch"
+            echo "Using GitHub API with PAT to create comment"
             curl -X POST \
-              -H "Authorization: token ${{ secrets.CLAUDE_TRIGGER_TOKEN }}" \
+              -H "Authorization: token $GITHUB_TOKEN" \
               -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/${{ github.repository }}/actions/workflows/claude-manual-trigger.yml/dispatches \
-              -d "{\"ref\": \"main\", \"inputs\": {\"pr_number\": \"$PR_NUMBER\", \"comment_body\": \"$COMMENT_BODY\"}}"
-            echo "✅ Triggered Claude workflow for PR #$PR_NUMBER"
+              https://api.github.com/repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
+              -d "{\"body\": \"$COMMENT_BODY\"}"
+            echo "✅ Created comment using PAT"
           else
-            echo "⚠️ CLAUDE_TRIGGER_TOKEN not set - Claude won't be triggered automatically"
+            echo "Using gh CLI to create comment"
+            gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
+            echo "✅ Created comment (may not trigger Claude without PAT)"
           fi
 
