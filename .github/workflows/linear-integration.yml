@@ -12,9 +12,11 @@ on:
       - linear_issue_completed # When issue is marked complete
 
 jobs:
-  # Job 1: Process issues with "Ready for Claude" label
+  # Job 1: Process issues with "Ready for Claude" label for GitHub Issues
   process-claude-ready:
-    if: contains(github.event.client_payload.labels, 'Ready for Claude')
+    if: |
+      github.event.action == 'linear_to_github_issue_event' &&
+      contains(github.event.client_payload.labels, 'Ready for Claude')
     runs-on: ubuntu-latest
     outputs:
       branch_name: ${{ steps.create-branch.outputs.branch_name }}
@@ -368,19 +370,24 @@ jobs:
           # - Create incident
           # - Page on-call engineer
 
-  # Job 3: Sync status back to Linear
+  # Job 3: Sync status back to Linear (for both issue and PR flows)
   update-linear:
     runs-on: ubuntu-latest
-    if: always()
-    needs: [process-claude-ready]
+    if: |
+      always() && 
+      (needs.process-claude-ready.result == 'success' || needs.process-linear-pr.result == 'success')
+    needs: [process-claude-ready, process-linear-pr]
     steps:
       - name: Update Linear issue
         env:
           LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
           ISSUE_ID: ${{ github.event.client_payload.issueId }}
-          BRANCH_NAME: ${{ needs.process-claude-ready.outputs.branch_name }}
+          BRANCH_NAME: ${{ needs.process-claude-ready.outputs.branch_name || needs.process-linear-pr.outputs.branch_name }}
           ISSUE_URL: ${{ needs.process-claude-ready.outputs.issue_url }}
+          PR_URL: ${{ needs.process-linear-pr.outputs.pr_url }}
           ISSUE_NUMBER: ${{ needs.process-claude-ready.outputs.issue_number }}
+          PR_NUMBER: ${{ needs.process-linear-pr.outputs.pr_number }}
+          EVENT_ACTION: ${{ github.event.action }}
         run: |
           echo "📝 Updating Linear issue status"
           
@@ -410,7 +417,7 @@ jobs:
             
             echo "Keeping labels: $LABEL_IDS"
             
-            # Update the issue to remove "Ready for Claude" label and add "In Progress"
+            # Update the issue to remove "Ready for Claude" label
             UPDATE_RESPONSE=$(curl -s -X POST \
               -H "Authorization: $LINEAR_API_KEY" \
               -H "Content-Type: application/json" \
@@ -421,13 +428,20 @@ jobs:
             
             echo "Label update response: $UPDATE_RESPONSE"
             
-            # Add a comment with the PR information
+            # Prepare comment based on event type
+            if [ "$EVENT_ACTION" == "linear_to_github_pr_event" ]; then
+              COMMENT_BODY="🤖 GitHub Action processed this issue\\n\\nGitHub PR: $PR_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe GitHub PR has been created and Claude will be mentioned to implement the feature. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the GitHub PR where @claude will be mentioned\\n3. Claude Code will implement the changes\\n4. Review and merge the PR"
+            else
+              COMMENT_BODY="🤖 GitHub Action processed this issue\\n\\nGitHub Issue: $ISSUE_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe GitHub issue has been created and Claude will be mentioned to implement the changes. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the GitHub issue where @claude will be mentioned\\n3. Claude Code will implement the changes\\n4. Create a PR with the changes"
+            fi
+            
+            # Add a comment with the GitHub information
             COMMENT_RESPONSE=$(curl -s -X POST \
               -H "Authorization: $LINEAR_API_KEY" \
               -H "Content-Type: application/json" \
               https://api.linear.app/graphql \
               -d "{
-                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"🤖 GitHub Action processed this issue\\n\\nGitHub Issue: $ISSUE_URL\\nBranch: \`$BRANCH_NAME\`\\n\\nThe GitHub issue has been created and Claude will be mentioned to implement the changes. The 'Ready for Claude' label has been removed.\\n\\nNext steps:\\n1. Check out the branch locally\\n2. Review the GitHub issue where @claude will be mentioned\\n3. Claude Code will implement the changes\\n4. Create a PR with the changes\\\" }) { success } }\"
+                \"query\": \"mutation { commentCreate(input: { issueId: \\\"$INTERNAL_ID\\\", body: \\\"$COMMENT_BODY\\\" }) { success } }\"
               }")
             
             echo "Comment creation response: $COMMENT_RESPONSE"
@@ -502,6 +516,7 @@ jobs:
     outputs:
       pr_number: ${{ steps.create-pr.outputs.pr_number }}
       pr_url: ${{ steps.create-pr.outputs.pr_url }}
+      branch_name: ${{ steps.create-branch.outputs.branch_name }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -640,7 +655,7 @@ jobs:
   # Job 8: Add Claude comment to PR
   comment-on-pr:
     if: needs.process-linear-pr.outputs.pr_number != ''
-    needs: [process-linear-pr]
+    needs: [process-linear-pr, update-linear]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -658,50 +673,3 @@ jobs:
           gh pr comment $PR_NUMBER --body "$COMMENT_BODY"
           echo "✅ Added Claude comment to PR #$PR_NUMBER"
 
-  # Job 9: Remove "Ready for Claude" label from Linear
-  update-linear-pr:
-    if: needs.process-linear-pr.outputs.pr_url != ''
-    needs: process-linear-pr
-    runs-on: ubuntu-latest
-    steps:
-      - name: Update Linear issue
-        env:
-          LINEAR_API_KEY: ${{ secrets.LINEAR_API_KEY }}
-        run: |
-          ISSUE_ID="${{ github.event.client_payload.issueId }}"
-          PR_URL="${{ needs.process-linear-pr.outputs.pr_url }}"
-          
-          echo "🔄 Updating Linear issue $ISSUE_ID"
-          
-          # GraphQL mutation to remove label and add comment
-          MUTATION='mutation UpdateIssue($issueId: String!, $labelIds: [String!]) {
-            issueRemoveLabel(id: $issueId, labelId: "ready-for-claude") {
-              success
-            }
-            commentCreate(input: {
-              issueId: $issueId,
-              body: "🤖 GitHub PR created: '"$PR_URL"'"
-            }) {
-              success
-            }
-          }'
-          
-          # Get current labels and remove "Ready for Claude"
-          CURRENT_LABELS='${{ toJson(github.event.client_payload.labelIds) }}'
-          UPDATED_LABELS=$(echo "$CURRENT_LABELS" | jq '. - ["ready-for-claude"]')
-          
-          # Execute the GraphQL mutation
-          curl -X POST https://api.linear.app/graphql \
-            -H "Authorization: $LINEAR_API_KEY" \
-            -H "Content-Type: application/json" \
-            -d '{
-              "query": "'"$MUTATION"'",
-              "variables": {
-                "issueId": "'"$ISSUE_ID"'",
-                "labelIds": '"$UPDATED_LABELS"'
-              }
-            }'
-          
-          echo "✅ Updated Linear issue and removed 'Ready for Claude' label"
-          echo "📝 Description:"
-          echo "${{ github.event.client_payload.description }}"
