@@ -46,3 +46,13 @@ ja:
       destroyed: "Todoが正常に削除されました。"
       completed: "Todoを完了としてマークしました。"
       reopened: "Todoを未完了としてマークしました。"
+  
+  # Language selection
+  language:
+    select: "言語を選択"
+    english: "English"
+    portuguese: "Português"
+    japanese: "日本語"
+  
+  # Common phrases
+  "Are you sure?": "本当によろしいですか？"

@@ -1,0 +1,87 @@
+pt:
+  hello: "Olá mundo"
+  
+  # Navigation and layout
+  nav:
+    todo_list: "Lista de Tarefas"
+    all_todos: "Todas as Tarefas"
+    new_todo: "Nova Tarefa"
+    toggle_dark_mode: "Alternar modo escuro"
+  
+  # Page titles and headers
+  pages:
+    my_todos: "Minhas Tarefas"
+    stay_organized: "Mantenha-se organizado e produtivo"
+    new_todo: "Nova Tarefa"
+    edit_todo: "Editar Tarefa"
+    create_todo: "Criar Tarefa"
+  
+  # Todo-related translations
+  todos:
+    title: "Título"
+    description: "Descrição"
+    due_date: "Data de Vencimento"
+    completed: "Concluída"
+    priority: "Prioridade"
+    status: "Status"
+    actions: "Ações"
+    edit: "Editar"
+    delete: "Excluir"
+    mark_complete: "Marcar como Concluída"
+    mark_incomplete: "Marcar como Pendente"
+    overdue: "Vencida"
+    pending: "Pendente"
+    
+  # Priority levels
+  priority:
+    low: "Baixa"
+    medium: "Média"
+    high: "Alta"
+  
+  # Alerts and messages
+  alerts:
+    overdue_tasks:
+      one: "Você tem %{count} tarefa vencida"
+      other: "Você tem %{count} tarefas vencidas"
+    todo_created: "Tarefa criada com sucesso!"
+    todo_updated: "Tarefa atualizada com sucesso!"
+    todo_deleted: "Tarefa excluída com sucesso!"
+    todo_completed: "Tarefa marcada como concluída!"
+    todo_uncompleted: "Tarefa marcada como pendente!"
+  
+  # Empty state
+  empty_state:
+    no_todos: "Nenhuma tarefa ainda"
+    create_first: "Crie sua primeira tarefa para começar"
+  
+  # Buttons and actions
+  actions:
+    create: "Criar"
+    update: "Atualizar"
+    cancel: "Cancelar"
+    save: "Salvar"
+    delete: "Excluir"
+    edit: "Editar"
+    back: "Voltar"
+    show: "Visualizar"
+  
+  # Footer
+  footer:
+    copyright: "© %{year} App Lista de Tarefas. Feito com Rails e Carinho."
+  
+  # Form validations
+  errors:
+    required: "é obrigatório"
+    too_short: "é muito curto (mínimo %{count} caracteres)"
+    too_long: "é muito longo (máximo %{count} caracteres)"
+    invalid_date: "não é uma data válida"
+  
+  # Language selection
+  language:
+    select: "Selecionar Idioma"
+    english: "English"
+    portuguese: "Português"
+    japanese: "日本語"
+  
+  # Common phrases
+  "Are you sure?": "Tem certeza?"

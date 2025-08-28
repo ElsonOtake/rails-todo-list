@@ -46,6 +46,15 @@
                       <rect width="3" height="2" fill="#ffffff"/>
                       <circle cx="1.5" cy="1" r="0.6" fill="#BC002D"/>
                     </svg>
+                  <% elsif I18n.locale == :pt %>
+                    <!-- Portuguese Flag -->
+                    <svg class="flag-icon" viewBox="0 0 30 20">
+                      <rect width="30" height="20" fill="#009739"/>
+                      <path d="M12 10 L2 2 L2 18 Z" fill="#FEDE00"/>
+                      <circle cx="12" cy="10" r="3.5" fill="#012169"/>
+                      <path d="M12 6.5 A3.5 3.5 0 0 1 12 13.5 A3 3 0 0 0 12 6.5 Z" fill="#FEDE00"/>
+                      <circle cx="12" cy="10" r="2.5" fill="transparent" stroke="#012169" stroke-width="0.5"/>
+                    </svg>
                   <% else %>
                     <!-- British Flag -->
                     <svg class="flag-icon" viewBox="0 0 60 30">
@@ -67,7 +76,7 @@
                       <path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/>
                       <path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/>
                     </svg>
-                    <span>English</span>
+                    <span><%= t("language.english") %></span>
                   <% end %>
                   
                   <%= link_to switch_language_path(:ja), data: { "turbo-method": :patch, action: "click->language#selectLanguage" }, class: "language-option #{'active' if I18n.locale == :ja}" do %>
@@ -75,7 +84,18 @@
                       <rect width="3" height="2" fill="#ffffff"/>
                       <circle cx="1.5" cy="1" r="0.6" fill="#BC002D"/>
                     </svg>
-                    <span>日本語</span>
+                    <span><%= t("language.japanese") %></span>
+                  <% end %>
+
+                  <%= link_to switch_language_path(:pt), data: { "turbo-method": :patch, action: "click->language#selectLanguage" }, class: "language-option #{'active' if I18n.locale == :pt}" do %>
+                    <svg class="flag-icon" viewBox="0 0 30 20">
+                      <rect width="30" height="20" fill="#009739"/>
+                      <path d="M12 10 L2 2 L2 18 Z" fill="#FEDE00"/>
+                      <circle cx="12" cy="10" r="3.5" fill="#012169"/>
+                      <path d="M12 6.5 A3.5 3.5 0 0 1 12 13.5 A3 3 0 0 0 12 6.5 Z" fill="#FEDE00"/>
+                      <circle cx="12" cy="10" r="2.5" fill="transparent" stroke="#012169" stroke-width="0.5"/>
+                    </svg>
+                    <span><%= t("language.portuguese") %></span>
                   <% end %>
                 </div>
               </div>

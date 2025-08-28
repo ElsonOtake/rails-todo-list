@@ -12,6 +12,15 @@ class ApplicationController < ActionController::Base
     redirect_back(fallback_location: root_path)
   end
 
+  def set_locale_route
+    if params[:locale].present? && I18n.available_locales.include?(params[:locale].to_sym)
+      session[:locale] = params[:locale]
+      redirect_to request.referer || root_path
+    else
+      redirect_to root_path
+    end
+  end
+
   private
 
   def set_locale

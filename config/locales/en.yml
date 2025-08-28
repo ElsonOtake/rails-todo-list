@@ -75,3 +75,13 @@ en:
       destroyed: "Todo was successfully deleted."
       completed: "Todo marked as completed."
       reopened: "Todo marked as incomplete."
+  
+  # Language selection
+  language:
+    select: "Select Language"
+    english: "English"
+    portuguese: "Portuguese"
+    japanese: "Japanese"
+  
+  # Common phrases
+  "Are you sure?": "Are you sure?"
