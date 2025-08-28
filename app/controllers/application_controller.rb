@@ -5,13 +5,16 @@ class ApplicationController < ActionController::Base
   before_action :set_locale
 
   def switch_language
-    session[:locale] = params[:locale] if I18n.available_locales.include?(params[:locale]&.to_sym)
-    redirect_back_or_to(root_path)
+    locale = params[:locale].to_s.strip
+    if I18n.available_locales.map(&:to_s).include?(locale)
+      session[:locale] = locale
+    end
+    redirect_back(fallback_location: root_path)
   end
 
   private
 
   def set_locale
-    I18n.locale = session[:locale] || I18n.default_locale
+    I18n.locale = session[:locale]&.to_sym || I18n.default_locale
   end
 end

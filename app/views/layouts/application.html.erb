@@ -59,7 +59,7 @@
                 </button>
                 
                 <div class="language-dropdown" data-language-target="dropdown">
-                  <%= link_to switch_language_path(:en), method: :patch, class: "language-option #{'active' if I18n.locale == :en}" do %>
+                  <%= link_to switch_language_path(:en), data: { "turbo-method": :patch, action: "click->language#selectLanguage" }, class: "language-option #{'active' if I18n.locale == :en}" do %>
                     <svg class="flag-icon" viewBox="0 0 60 30">
                       <rect width="60" height="30" fill="#012169"/>
                       <path d="M0 0l60 30M60 0L0 30" stroke="#fff" stroke-width="6"/>
@@ -70,7 +70,7 @@
                     <span>English</span>
                   <% end %>
                   
-                  <%= link_to switch_language_path(:ja), method: :patch, class: "language-option #{'active' if I18n.locale == :ja}" do %>
+                  <%= link_to switch_language_path(:ja), data: { "turbo-method": :patch, action: "click->language#selectLanguage" }, class: "language-option #{'active' if I18n.locale == :ja}" do %>
                     <svg class="flag-icon" viewBox="0 0 3 2">
                       <rect width="3" height="2" fill="#ffffff"/>
                       <circle cx="1.5" cy="1" r="0.6" fill="#BC002D"/>

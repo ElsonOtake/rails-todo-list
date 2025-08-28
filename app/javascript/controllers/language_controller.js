@@ -34,6 +34,14 @@ export default class extends Controller {
       this.close()
     }
   }
+  
+  selectLanguage() {
+    // Don't prevent the link from working
+    // Just close the dropdown after a small delay to allow the link to process
+    setTimeout(() => {
+      this.close()
+    }, 100)
+  }
 
   removeEventListeners() {
     document.removeEventListener("click", this.boundClickOutside)
