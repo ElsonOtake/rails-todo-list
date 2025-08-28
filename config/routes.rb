@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Language switching route
+  get "/locale/:locale", to: "application#set_locale", as: :set_locale
+
   root "todos#index"
 
   resources :todos do
