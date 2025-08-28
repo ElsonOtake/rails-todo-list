@@ -1,81 +1,49 @@
 pt:
-  hello: "Olá mundo"
+  app:
+    name: "Lista de Tarefas"
+    tagline: "Organize suas tarefas"
+    footer: "App Lista de Tarefas. Feito com Rails e Carinho."
   
-  # Navigation and layout
-  nav:
-    todo_list: "Lista de Tarefas"
+  navigation:
     all_todos: "Todas as Tarefas"
     new_todo: "Nova Tarefa"
+    language_selection: "Idioma"
     toggle_dark_mode: "Alternar modo escuro"
   
-  # Page titles and headers
-  pages:
-    my_todos: "Minhas Tarefas"
-    stay_organized: "Mantenha-se organizado e produtivo"
-    new_todo: "Nova Tarefa"
-    edit_todo: "Editar Tarefa"
-    create_todo: "Criar Tarefa"
-  
-  # Todo-related translations
   todos:
-    title: "Título"
-    description: "Descrição"
-    due_date: "Data de Vencimento"
-    completed: "Concluída"
-    priority: "Prioridade"
-    status: "Status"
-    actions: "Ações"
-    edit: "Editar"
-    delete: "Excluir"
-    mark_complete: "Marcar como Concluída"
-    mark_incomplete: "Marcar como Pendente"
-    overdue: "Vencida"
-    pending: "Pendente"
-    
-  # Priority levels
-  priority:
-    low: "Baixa"
-    medium: "Média"
-    high: "Alta"
-  
-  # Alerts and messages
-  alerts:
+    title: "Minhas Tarefas"
+    subtitle: "Mantenha-se organizado e produtivo"
+    no_todos_title: "Nenhuma tarefa ainda"
+    no_todos_text: "Crie sua primeira tarefa para começar"
+    create_todo: "Criar Tarefa"
+    edit_todo: "Editar Tarefa"
+    new_todo: "Nova Tarefa"
     overdue_tasks:
       one: "Você tem %{count} tarefa vencida"
       other: "Você tem %{count} tarefas vencidas"
-    todo_created: "Tarefa criada com sucesso!"
-    todo_updated: "Tarefa atualizada com sucesso!"
-    todo_deleted: "Tarefa excluída com sucesso!"
-    todo_completed: "Tarefa marcada como concluída!"
-    todo_uncompleted: "Tarefa marcada como pendente!"
-  
-  # Empty state
-  empty_state:
-    no_todos: "Nenhuma tarefa ainda"
-    create_first: "Crie sua primeira tarefa para começar"
-  
-  # Buttons and actions
-  actions:
-    create: "Criar"
-    update: "Atualizar"
-    cancel: "Cancelar"
-    save: "Salvar"
-    delete: "Excluir"
-    edit: "Editar"
-    back: "Voltar"
-    show: "Visualizar"
-  
-  # Footer
-  footer:
-    copyright: "© %{year} App Lista de Tarefas. Feito com Rails e Carinho."
-  
-  # Form validations
-  errors:
-    required: "é obrigatório"
-    too_short: "é muito curto (mínimo %{count} caracteres)"
-    too_long: "é muito longo (máximo %{count} caracteres)"
-    invalid_date: "não é uma data válida"
-  
+    form:
+      title: "Título"
+      description: "Descrição"
+      due_date: "Data de vencimento"
+      priority: "Prioridade"
+      create: "Criar Tarefa"
+      update: "Atualizar Tarefa"
+      cancel: "Cancelar"
+    priority:
+      low: "Baixa"
+      medium: "Média"
+      high: "Alta"
+    actions:
+      edit: "Editar"
+      delete: "Excluir"
+      complete: "Concluir"
+      incomplete: "Marcar como pendente"
+    notices:
+      created: "Tarefa criada com sucesso."
+      updated: "Tarefa atualizada com sucesso."
+      destroyed: "Tarefa excluída com sucesso."
+      completed: "Tarefa marcada como concluída."
+      reopened: "Tarefa marcada como pendente."
   # Language selection
   language:
     select: "Selecionar Idioma"
