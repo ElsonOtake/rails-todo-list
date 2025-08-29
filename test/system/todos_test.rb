@@ -16,7 +16,7 @@ class TodosTest < ApplicationSystemTestCase
 
     fill_in "Title", with: "System test todo"
     fill_in "Description", with: "This is a test description"
-    select "Medium Priority", from: "Priority"
+    select "Medium", from: "Priority"
 
     click_on "Create Todo"
 
