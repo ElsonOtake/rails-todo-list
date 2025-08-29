@@ -4,6 +4,11 @@ on:
   repository_dispatch:
     types: [linear_to_github_pr_event]
 
+# Concurrency control to prevent multiple runs for the same Linear issue
+concurrency:
+  group: linear-pr-${{ github.event.client_payload.id }}
+  cancel-in-progress: false
+
 jobs:
   validate-inputs:
     name: Validate inputs
