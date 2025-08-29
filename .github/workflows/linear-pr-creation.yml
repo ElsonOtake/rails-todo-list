@@ -5,9 +5,52 @@ on:
     types: [linear_to_github_pr_event]
 
 jobs:
+  validate-inputs:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    outputs:
+      is_valid: ${{ steps.validate.outputs.is_valid }}
+    steps:
+      - name: Validate required fields
+        id: validate
+        run: |
+          # Validate required fields exist and are not empty
+          if [ -z "${{ github.event.client_payload.title }}" ]; then
+            echo "Error: Missing title"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ -z "${{ github.event.client_payload.identifier }}" ]; then
+            echo "Error: Missing identifier"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ -z "${{ github.event.client_payload.id }}" ]; then
+            echo "Error: Missing issue ID"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Validate title length (max 256 characters for GitHub PR title)
+          title_length=${#TITLE}
+          if [ "$title_length" -gt 256 ]; then
+            echo "Error: Title too long (${title_length} > 256 characters)"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "All required fields are valid"
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+        env:
+          TITLE: ${{ github.event.client_payload.title }}
+
   check-conditions:
     name: Check if PR creation should proceed
     runs-on: ubuntu-latest
+    needs: validate-inputs
+    if: needs.validate-inputs.outputs.is_valid == 'true'
     outputs:
       should_proceed: ${{ steps.check.outputs.should_proceed }}
       has_ready_label: ${{ steps.check.outputs.has_ready_label }}
@@ -41,8 +84,8 @@ jobs:
   create-pr:
     name: Create PR from Linear card
     runs-on: ubuntu-latest
-    needs: check-conditions
-    if: needs.check-conditions.outputs.should_proceed == 'true'
+    needs: [validate-inputs, check-conditions]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
     outputs:
       pr_number: ${{ steps.create-pr.outputs.pr_number }}
       pr_url: ${{ steps.create-pr.outputs.pr_url }}
@@ -50,9 +93,24 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Sanitize inputs
+        id: sanitize
+        run: |
+          # Sanitize branch identifier (allow only alphanumeric, dash, underscore)
+          identifier=$(echo "${{ github.event.client_payload.identifier }}" | sed 's/[^a-zA-Z0-9_-]//g')
+          echo "SANITIZED_IDENTIFIER=$identifier" >> $GITHUB_ENV
+          
+          # Sanitize and escape title for safety
+          title=$(echo "${{ github.event.client_payload.title }}" | sed "s/'/'\\\\''/g" | head -c 256)
+          echo "SANITIZED_TITLE=$title" >> $GITHUB_ENV
+          
+          # Sanitize description (escape backticks and quotes)
+          description=$(echo "${{ github.event.client_payload.description }}" | sed "s/\`/\\\\\`/g" | sed "s/'/'\\\\''/g")
+          echo "SANITIZED_DESCRIPTION=$description" >> $GITHUB_ENV
+
       - name: Create feature branch
         run: |
-          branch_name="feature/linear-${{ github.event.client_payload.identifier }}"
+          branch_name="feature/linear-${SANITIZED_IDENTIFIER}"
           git checkout -b "$branch_name"
           git push origin "$branch_name"
           echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
@@ -62,15 +120,19 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const title = process.env.SANITIZED_TITLE;
+            const description = process.env.SANITIZED_DESCRIPTION;
+            const identifier = process.env.SANITIZED_IDENTIFIER;
+            
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: '${{ github.event.client_payload.title }}',
-              body: `${{ github.event.client_payload.description }}
+              title: title,
+              body: `${description}
               
               ---
               
-              **Linear Issue:** [${{ github.event.client_payload.identifier }}](${{ github.event.client_payload.url }})
+              **Linear Issue:** [${identifier}](${{ github.event.client_payload.url }})
               **Team ID:** ${{ github.event.client_payload.teamId }}
               **Issue Number:** ${{ github.event.client_payload.number }}`,
               head: process.env.BRANCH_NAME,
@@ -84,8 +146,8 @@ jobs:
   add-claude-comment:
     name: Add Claude implementation comment
     runs-on: ubuntu-latest
-    needs: [check-conditions, create-pr]
-    if: needs.check-conditions.outputs.should_proceed == 'true'
+    needs: [validate-inputs, check-conditions, create-pr]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
     steps:
       - name: Add Claude comment to PR
         uses: actions/github-script@v7
@@ -103,8 +165,8 @@ jobs:
   remove-linear-label:
     name: Remove Ready for Claude label from Linear
     runs-on: ubuntu-latest
-    needs: [check-conditions, create-pr]
-    if: needs.check-conditions.outputs.should_proceed == 'true'
+    needs: [validate-inputs, check-conditions, create-pr]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
     steps:
       - name: Remove Linear label
         run: |
