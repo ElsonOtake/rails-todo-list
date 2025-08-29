@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
   # Language switching route
-  get "/locale/:locale", to: "application#set_locale", as: :set_locale
+  get "/locale/:locale", to: "application#set_locale_route", as: :set_locale
 
   root "todos#index"
 
@@ -9,6 +9,9 @@ Rails.application.routes.draw do
       patch :toggle
     end
   end
+
+  # Language switching route
+  patch "/switch_language/:locale", to: "application#switch_language", as: :switch_language
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

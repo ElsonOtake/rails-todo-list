@@ -30,86 +30,58 @@
 en:
   hello: "Hello world"
   
-  # Navigation and layout
-  nav:
-    todo_list: "Todo List"
+  app:
+    name: "Todo List"
+    tagline: "Organize Your Tasks"
+    footer: "Todo List App. Built with Rails & Love."
+  
+  navigation:
     all_todos: "All Todos"
     new_todo: "New Todo"
+    language_selection: "Language"
     toggle_dark_mode: "Toggle dark mode"
   
-  # Page titles and headers
-  pages:
-    my_todos: "My Todos"
-    stay_organized: "Stay organized and productive"
-    new_todo: "New Todo"
-    edit_todo: "Edit Todo"
-    create_todo: "Create Todo"
-  
-  # Todo-related translations
   todos:
-    title: "Title"
-    description: "Description"
-    due_date: "Due Date"
-    completed: "Completed"
-    priority: "Priority"
-    status: "Status"
-    actions: "Actions"
-    edit: "Edit"
-    delete: "Delete"
-    mark_complete: "Mark Complete"
-    mark_incomplete: "Mark Incomplete"
-    overdue: "Overdue"
-    pending: "Pending"
-    
-  # Priority levels
-  priority:
-    low: "Low"
-    medium: "Medium"
-    high: "High"
-  
-  # Alerts and messages
-  alerts:
+    title: "My Todos"
+    subtitle: "Stay organized and productive"
+    no_todos_title: "No todos yet"
+    no_todos_text: "Create your first todo to get started"
+    create_todo: "Create Todo"
+    edit_todo: "Edit Todo"
+    new_todo: "New Todo"
     overdue_tasks:
       one: "You have %{count} overdue task"
       other: "You have %{count} overdue tasks"
-    todo_created: "Todo was successfully created!"
-    todo_updated: "Todo was successfully updated!"
-    todo_deleted: "Todo was successfully deleted!"
-    todo_completed: "Todo marked as completed!"
-    todo_uncompleted: "Todo marked as pending!"
-  
-  # Empty state
-  empty_state:
-    no_todos: "No todos yet"
-    create_first: "Create your first todo to get started"
-  
-  # Buttons and actions
-  actions:
-    create: "Create"
-    update: "Update"
-    cancel: "Cancel"
-    save: "Save"
-    delete: "Delete"
-    edit: "Edit"
-    back: "Back"
-    show: "Show"
-  
-  # Footer
-  footer:
-    copyright: "© %{year} Todo List App. Built with Rails & Love."
-  
-  # Form validations
-  errors:
-    required: "is required"
-    too_short: "is too short (minimum %{count} characters)"
-    too_long: "is too long (maximum %{count} characters)"
-    invalid_date: "is not a valid date"
+    form:
+      title: "Title"
+      description: "Description"
+      due_date: "Due date"
+      priority: "Priority"
+      create: "Create Todo"
+      update: "Update Todo"
+      cancel: "Cancel"
+    priority:
+      low: "Low"
+      medium: "Medium"
+      high: "High"
+    actions:
+      edit: "Edit"
+      delete: "Delete"
+      complete: "Complete"
+      incomplete: "Mark as incomplete"
+    notices:
+      created: "Todo was successfully created."
+      updated: "Todo was successfully updated."
+      destroyed: "Todo was successfully deleted."
+      completed: "Todo marked as completed."
+      reopened: "Todo marked as incomplete."
   
   # Language selection
   language:
     select: "Select Language"
     english: "English"
     portuguese: "Portuguese"
+    japanese: "Japanese"
   
   # Common phrases
   "Are you sure?": "Are you sure?"

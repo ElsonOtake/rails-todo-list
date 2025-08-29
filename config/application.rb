@@ -25,7 +25,7 @@ module ToDoList
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Internationalization configuration
-    config.i18n.available_locales = [:en, :pt]
+    config.i18n.available_locales = [ :en, :ja, :pt ]
     config.i18n.default_locale = :en
   end
 end
