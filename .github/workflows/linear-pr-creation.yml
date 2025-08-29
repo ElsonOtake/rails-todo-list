@@ -9,6 +9,12 @@ concurrency:
   group: linear-pr-${{ github.event.client_payload.id }}
   cancel-in-progress: false
 
+# Explicit permissions following principle of least privilege
+permissions:
+  contents: write      # Required for creating branches and pushing
+  pull-requests: write # Required for creating pull requests
+  issues: write        # Required for adding comments to PRs
+
 jobs:
   validate-inputs:
     name: Validate inputs
