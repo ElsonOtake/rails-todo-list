@@ -1,0 +1,304 @@
+name: Linear to GitHub PR Creation
+
+on:
+  repository_dispatch:
+    types: [linear_to_github_pr_event]
+
+# Concurrency control to prevent multiple runs for the same Linear issue
+concurrency:
+  group: linear-pr-${{ github.event.client_payload.id }}
+  cancel-in-progress: false
+
+# Explicit permissions following principle of least privilege
+permissions:
+  contents: write      # Required for creating branches and pushing
+  pull-requests: write # Required for creating pull requests
+  issues: write        # Required for adding comments to PRs
+
+jobs:
+  validate-inputs:
+    name: Validate inputs
+    runs-on: ubuntu-latest
+    outputs:
+      is_valid: ${{ steps.validate.outputs.is_valid }}
+    steps:
+      - name: Validate required fields
+        id: validate
+        run: |
+          # Validate required fields exist and are not empty
+          if [ -z "${{ github.event.client_payload.title }}" ]; then
+            echo "Error: Missing title"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ -z "${{ github.event.client_payload.identifier }}" ]; then
+            echo "Error: Missing identifier"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ -z "${{ github.event.client_payload.id }}" ]; then
+            echo "Error: Missing issue ID"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Validate title length (max 256 characters for GitHub PR title)
+          title_length=${#TITLE}
+          if [ "$title_length" -gt 256 ]; then
+            echo "Error: Title too long (${title_length} > 256 characters)"
+            echo "is_valid=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          echo "All required fields are valid"
+          echo "is_valid=true" >> $GITHUB_OUTPUT
+        env:
+          TITLE: ${{ github.event.client_payload.title }}
+
+  check-conditions:
+    name: Check if PR creation should proceed
+    runs-on: ubuntu-latest
+    needs: validate-inputs
+    if: needs.validate-inputs.outputs.is_valid == 'true'
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+      has_ready_label: ${{ steps.check.outputs.has_ready_label }}
+    steps:
+      - name: Check event type and labels
+        id: check
+        run: |
+          echo "Event type: ${{ github.event.action }}"
+          echo "Labels: ${{ toJson(github.event.client_payload.labels) }}"
+          
+          # Check if event type matches
+          if [ "${{ github.event.action }}" = "linear_to_github_pr_event" ]; then
+            echo "Event type matches"
+            
+            # Check if Ready for Claude label exists
+            labels='${{ toJson(github.event.client_payload.labels) }}'
+            if echo "$labels" | grep -q "Ready for Claude"; then
+              echo "has_ready_label=true" >> $GITHUB_OUTPUT
+              echo "should_proceed=true" >> $GITHUB_OUTPUT
+              echo "All conditions met - proceeding with PR creation"
+            else
+              echo "has_ready_label=false" >> $GITHUB_OUTPUT
+              echo "should_proceed=false" >> $GITHUB_OUTPUT
+              echo "Missing 'Ready for Claude' label - skipping"
+            fi
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "Event type doesn't match - skipping"
+          fi
+
+  create-pr:
+    name: Create PR from Linear card
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, check-conditions]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      pr_url: ${{ steps.create-pr.outputs.pr_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Sanitize inputs
+        id: sanitize
+        run: |
+          # Sanitize branch identifier (allow only alphanumeric, dash, underscore)
+          identifier=$(echo "${{ github.event.client_payload.identifier }}" | sed 's/[^a-zA-Z0-9_-]//g')
+          echo "SANITIZED_IDENTIFIER=$identifier" >> $GITHUB_ENV
+          
+          # Sanitize and escape title for safety
+          title=$(echo "${{ github.event.client_payload.title }}" | sed "s/'/'\\\\''/g" | head -c 256)
+          echo "SANITIZED_TITLE=$title" >> $GITHUB_ENV
+          
+          # Sanitize description (escape backticks and quotes)
+          description=$(echo "${{ github.event.client_payload.description }}" | sed "s/\`/\\\\\`/g" | sed "s/'/'\\\\''/g")
+          echo "SANITIZED_DESCRIPTION=$description" >> $GITHUB_ENV
+
+      - name: Create feature branch
+        run: |
+          branch_name="feature/linear-${SANITIZED_IDENTIFIER}"
+          
+          # Check if branch already exists on remote
+          if git ls-remote --heads origin "$branch_name" | grep -q "$branch_name"; then
+            echo "Branch $branch_name already exists on remote, using existing branch"
+            git fetch origin "$branch_name"
+            git checkout "$branch_name"
+          else
+            # Create new branch
+            git checkout -b "$branch_name"
+            if ! git push origin "$branch_name"; then
+              echo "Error: Failed to push branch to remote"
+              exit 1
+            fi
+          fi
+          
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = process.env.SANITIZED_TITLE;
+            const description = process.env.SANITIZED_DESCRIPTION;
+            const identifier = process.env.SANITIZED_IDENTIFIER;
+            
+            try {
+              // Check if PR already exists for this branch
+              const { data: existingPRs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                head: `${context.repo.owner}:${process.env.BRANCH_NAME}`,
+                state: 'open'
+              });
+              
+              if (existingPRs.length > 0) {
+                const existingPR = existingPRs[0];
+                console.log(`PR already exists: #${existingPR.number} - ${existingPR.html_url}`);
+                core.setOutput('pr_number', existingPR.number);
+                core.setOutput('pr_url', existingPR.html_url);
+                return;
+              }
+              
+              // Create new PR
+              const { data: pr } = await github.rest.pulls.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: `${description}
+                
+                ---
+                
+                **Linear Issue:** [${identifier}](${{ github.event.client_payload.url }})
+                **Team ID:** ${{ github.event.client_payload.teamId }}
+                **Issue Number:** ${{ github.event.client_payload.number }}`,
+                head: process.env.BRANCH_NAME,
+                base: 'main'
+              });
+              
+              core.setOutput('pr_number', pr.number);
+              core.setOutput('pr_url', pr.html_url);
+              console.log(`Created PR #${pr.number}: ${pr.html_url}`);
+            } catch (error) {
+              console.error('Error creating PR:', error.message);
+              core.setFailed(`Failed to create PR: ${error.message}`);
+            }
+
+  add-claude-comment:
+    name: Add Claude implementation comment
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, check-conditions, create-pr]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
+    steps:
+      - name: Add Claude comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: ${{ needs.create-pr.outputs.pr_number }},
+                body: '@claude implement this feature based on the PR description'
+              });
+              
+              console.log('Added Claude comment to PR #${{ needs.create-pr.outputs.pr_number }}');
+            } catch (error) {
+              console.error('Error adding comment:', error.message);
+              core.warning(`Failed to add Claude comment: ${error.message}`);
+            }
+
+  remove-linear-label:
+    name: Remove Ready for Claude label from Linear
+    runs-on: ubuntu-latest
+    needs: [validate-inputs, check-conditions, create-pr]
+    if: needs.validate-inputs.outputs.is_valid == 'true' && needs.check-conditions.outputs.should_proceed == 'true'
+    steps:
+      - name: Remove Linear label
+        run: |
+          set -e  # Exit on error
+          
+          # Get current issue details and labels
+          response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { issue(id: \"${{ github.event.client_payload.id }}\") { id labels { nodes { id name } } } }"
+            }' \
+            -w "\n%{http_code}" \
+            https://api.linear.app/graphql)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Error: Failed to fetch Linear issue (HTTP $http_code)"
+            echo "Response: $body"
+            exit 1
+          fi
+          
+          # Check for GraphQL errors
+          if echo "$body" | jq -e '.errors' > /dev/null 2>&1; then
+            echo "Error: Linear API returned errors"
+            echo "$body" | jq '.errors'
+            exit 1
+          fi
+          
+          echo "Current issue details: $body"
+          
+          # Extract label IDs excluding "Ready for Claude"
+          label_ids=$(echo "$body" | jq -r '.data.issue.labels.nodes[] | select(.name != "Ready for Claude") | .id' | jq -R . | jq -s . || echo "[]")
+          internal_id=$(echo "$body" | jq -r '.data.issue.id')
+          
+          if [ "$internal_id" = "null" ] || [ -z "$internal_id" ]; then
+            echo "Error: Could not extract issue ID"
+            exit 1
+          fi
+          
+          echo "Filtered label IDs: $label_ids"
+          echo "Internal ID: $internal_id"
+          
+          # Update issue with filtered labels
+          update_response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { issueUpdate(id: \\\"$internal_id\\\", input: { labelIds: $label_ids }) { success issue { labels { nodes { name } } } } }\"
+            }" \
+            -w "\n%{http_code}" \
+            https://api.linear.app/graphql)
+          
+          update_http_code=$(echo "$update_response" | tail -n1)
+          update_body=$(echo "$update_response" | head -n-1)
+          
+          if [ "$update_http_code" != "200" ]; then
+            echo "Warning: Failed to update Linear labels (HTTP $update_http_code)"
+            echo "Response: $update_body"
+          else
+            echo "Label update response: $update_body"
+          fi
+          
+          # Add comment to Linear issue (non-critical, continue on failure)
+          comment_response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { commentCreate(input: { issueId: \\\"$internal_id\\\", body: \\\"GitHub PR created: ${{ needs.create-pr.outputs.pr_url }}\\\\n\\\\nThis issue has been processed and a pull request has been created for implementation.\\\" }) { success } }\"
+            }" \
+            -w "\n%{http_code}" \
+            https://api.linear.app/graphql)
+          
+          comment_http_code=$(echo "$comment_response" | tail -n1)
+          comment_body=$(echo "$comment_response" | head -n-1)
+          
+          if [ "$comment_http_code" != "200" ]; then
+            echo "Warning: Failed to add Linear comment (HTTP $comment_http_code)"
+            echo "Response: $comment_body"
+          else
+            echo "Comment creation response: $comment_body"
+          fi
