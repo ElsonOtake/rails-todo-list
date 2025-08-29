@@ -102,7 +102,7 @@ jobs:
       pr_url: ${{ steps.create-pr.outputs.pr_url }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Sanitize inputs
         id: sanitize
