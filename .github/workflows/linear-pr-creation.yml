@@ -1,0 +1,149 @@
+name: Linear to GitHub PR Creation
+
+on:
+  repository_dispatch:
+    types: [linear_to_github_pr_event]
+
+jobs:
+  check-conditions:
+    name: Check if PR creation should proceed
+    runs-on: ubuntu-latest
+    outputs:
+      should_proceed: ${{ steps.check.outputs.should_proceed }}
+      has_ready_label: ${{ steps.check.outputs.has_ready_label }}
+    steps:
+      - name: Check event type and labels
+        id: check
+        run: |
+          echo "Event type: ${{ github.event.action }}"
+          echo "Labels: ${{ toJson(github.event.client_payload.labels) }}"
+          
+          # Check if event type matches
+          if [ "${{ github.event.action }}" = "linear_to_github_pr_event" ]; then
+            echo "Event type matches"
+            
+            # Check if Ready for Claude label exists
+            labels='${{ toJson(github.event.client_payload.labels) }}'
+            if echo "$labels" | grep -q "Ready for Claude"; then
+              echo "has_ready_label=true" >> $GITHUB_OUTPUT
+              echo "should_proceed=true" >> $GITHUB_OUTPUT
+              echo "All conditions met - proceeding with PR creation"
+            else
+              echo "has_ready_label=false" >> $GITHUB_OUTPUT
+              echo "should_proceed=false" >> $GITHUB_OUTPUT
+              echo "Missing 'Ready for Claude' label - skipping"
+            fi
+          else
+            echo "should_proceed=false" >> $GITHUB_OUTPUT
+            echo "Event type doesn't match - skipping"
+          fi
+
+  create-pr:
+    name: Create PR from Linear card
+    runs-on: ubuntu-latest
+    needs: check-conditions
+    if: needs.check-conditions.outputs.should_proceed == 'true'
+    outputs:
+      pr_number: ${{ steps.create-pr.outputs.pr_number }}
+      pr_url: ${{ steps.create-pr.outputs.pr_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create feature branch
+        run: |
+          branch_name="feature/linear-${{ github.event.client_payload.identifier }}"
+          git checkout -b "$branch_name"
+          git push origin "$branch_name"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+
+      - name: Create Pull Request
+        id: create-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '${{ github.event.client_payload.title }}',
+              body: `${{ github.event.client_payload.description }}
+              
+              ---
+              
+              **Linear Issue:** [${{ github.event.client_payload.identifier }}](${{ github.event.client_payload.url }})
+              **Team ID:** ${{ github.event.client_payload.teamId }}
+              **Issue Number:** ${{ github.event.client_payload.number }}`,
+              head: process.env.BRANCH_NAME,
+              base: 'main'
+            });
+            
+            core.setOutput('pr_number', pr.number);
+            core.setOutput('pr_url', pr.html_url);
+            console.log(`Created PR #${pr.number}: ${pr.html_url}`);
+
+  add-claude-comment:
+    name: Add Claude implementation comment
+    runs-on: ubuntu-latest
+    needs: [check-conditions, create-pr]
+    if: needs.check-conditions.outputs.should_proceed == 'true'
+    steps:
+      - name: Add Claude comment to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: ${{ needs.create-pr.outputs.pr_number }},
+              body: '@claude implement this feature based on the PR description'
+            });
+            
+            console.log('Added Claude comment to PR #${{ needs.create-pr.outputs.pr_number }}');
+
+  remove-linear-label:
+    name: Remove Ready for Claude label from Linear
+    runs-on: ubuntu-latest
+    needs: [check-conditions, create-pr]
+    if: needs.check-conditions.outputs.should_proceed == 'true'
+    steps:
+      - name: Remove Linear label
+        run: |
+          # Get current issue details and labels
+          response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "query": "query { issue(id: \"${{ github.event.client_payload.id }}\") { id labels { nodes { id name } } } }"
+            }' \
+            https://api.linear.app/graphql)
+          
+          echo "Current issue details: $response"
+          
+          # Extract label IDs excluding "Ready for Claude"
+          label_ids=$(echo "$response" | jq -r '.data.issue.labels.nodes[] | select(.name != "Ready for Claude") | .id' | jq -R . | jq -s .)
+          internal_id=$(echo "$response" | jq -r '.data.issue.id')
+          
+          echo "Filtered label IDs: $label_ids"
+          echo "Internal ID: $internal_id"
+          
+          # Update issue with filtered labels
+          update_response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { issueUpdate(id: \\\"$internal_id\\\", input: { labelIds: $label_ids }) { success issue { labels { nodes { name } } } } }\"
+            }" \
+            https://api.linear.app/graphql)
+          
+          echo "Label update response: $update_response"
+          
+          # Add comment to Linear issue
+          comment_response=$(curl -X POST \
+            -H "Authorization: ${{ secrets.LINEAR_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"query\": \"mutation { commentCreate(input: { issueId: \\\"$internal_id\\\", body: \\\"GitHub PR created: ${{ needs.create-pr.outputs.pr_url }}\\\\n\\\\nThis issue has been processed and a pull request has been created for implementation.\\\" }) { success } }\"
+            }" \
+            https://api.linear.app/graphql)
+          
+          echo "Comment creation response: $comment_response"
