@@ -103,6 +103,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0  # Fetch all history for proper branch comparison
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Sanitize inputs
         id: sanitize
@@ -119,48 +126,40 @@ jobs:
           description=$(echo "${{ github.event.client_payload.description }}" | sed "s/\`/\\\\\`/g" | sed "s/'/'\\\\''/g")
           echo "SANITIZED_DESCRIPTION=$description" >> $GITHUB_ENV
 
-      - name: Create feature branch
+      - name: Create or checkout feature branch
+        id: branch-setup
         run: |
           branch_name="feature/linear-${SANITIZED_IDENTIFIER}"
+          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
+          
+          # Fetch latest changes
+          git fetch origin main
           
           # Check if branch already exists on remote
           if git ls-remote --heads origin "$branch_name" | grep -q "$branch_name"; then
-            echo "Branch $branch_name already exists on remote, using existing branch"
+            echo "Branch $branch_name already exists on remote"
             git fetch origin "$branch_name"
-            git checkout "$branch_name"
-          else
-            # Create new branch
-            git checkout -b "$branch_name"
-            if ! git push origin "$branch_name"; then
-              echo "Error: Failed to push branch to remote"
-              exit 1
+            git checkout -b "$branch_name" "origin/$branch_name"
+            
+            # Check if branch has any commits different from main
+            commit_count=$(git rev-list --count origin/main..HEAD)
+            if [ "$commit_count" -eq 0 ]; then
+              echo "Branch exists but has no commits different from main"
+              echo "needs_initial_commit=true" >> $GITHUB_OUTPUT
+            else
+              echo "Branch has $commit_count commit(s)"
+              echo "needs_initial_commit=false" >> $GITHUB_OUTPUT
             fi
-          fi
-          
-          echo "BRANCH_NAME=$branch_name" >> $GITHUB_ENV
-
-      - name: Check for commits to merge
-        id: check-commits
-        run: |
-          # Check if there are any commits between main and the feature branch
-          commit_count=$(git rev-list --count origin/main..HEAD)
-          
-          if [ "$commit_count" -eq 0 ]; then
-            echo "No commits to merge between main and $BRANCH_NAME"
-            echo "has_commits=false" >> $GITHUB_OUTPUT
-            echo "::warning::No commits found between main and feature branch. Creating an empty PR or adding initial commit may be needed."
           else
-            echo "Found $commit_count commit(s) to merge"
-            echo "has_commits=true" >> $GITHUB_OUTPUT
+            # Create new branch from main
+            git checkout -b "$branch_name" origin/main
+            echo "Created new branch $branch_name"
+            echo "needs_initial_commit=true" >> $GITHUB_OUTPUT
           fi
 
       - name: Create initial commit if needed
-        if: steps.check-commits.outputs.has_commits == 'false'
+        if: steps.branch-setup.outputs.needs_initial_commit == 'true'
         run: |
-          # Configure git user for the commit
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
           # Create a Linear issue tracking file with issue details
           mkdir -p .linear
           cat > .linear/issue-${SANITIZED_IDENTIFIER}.md << EOF
@@ -181,9 +180,14 @@ jobs:
           
           git add .linear/issue-${SANITIZED_IDENTIFIER}.md
           git commit -m "Add Linear issue ${SANITIZED_IDENTIFIER} for implementation"
-          git push origin "$BRANCH_NAME"
           
-          echo "Created initial commit with Linear issue details"
+          # Push the new commit
+          if ! git push origin "$BRANCH_NAME"; then
+            echo "Error: Failed to push initial commit"
+            exit 1
+          fi
+          
+          echo "Successfully created initial commit with Linear issue details"
 
       - name: Create Pull Request
         id: create-pr
