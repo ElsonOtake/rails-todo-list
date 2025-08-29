@@ -47,13 +47,12 @@
                       <circle cx="1.5" cy="1" r="0.6" fill="#BC002D"/>
                     </svg>
                   <% elsif I18n.locale == :pt %>
-                    <!-- Portuguese Flag -->
-                    <svg class="flag-icon" viewBox="0 0 30 20">
-                      <rect width="30" height="20" fill="#009739"/>
-                      <path d="M12 10 L2 2 L2 18 Z" fill="#FEDE00"/>
-                      <circle cx="12" cy="10" r="3.5" fill="#012169"/>
-                      <path d="M12 6.5 A3.5 3.5 0 0 1 12 13.5 A3 3 0 0 0 12 6.5 Z" fill="#FEDE00"/>
-                      <circle cx="12" cy="10" r="2.5" fill="transparent" stroke="#012169" stroke-width="0.5"/>
+                    <!-- Brazilian Flag -->
+                    <svg class="flag-icon" viewBox="0 0 20 14">
+                      <rect width="20" height="14" fill="#009739"/>
+                      <path d="M10 2 L17 7 L10 12 L3 7 Z" fill="#FEDE00"/>
+                      <circle cx="10" cy="7" r="3.2" fill="#002776"/>
+                      <path d="M7.2 7 Q10 5.8 12.8 7" stroke="#FEDE00" stroke-width="0.3" fill="none"/>
                     </svg>
                   <% else %>
                     <!-- British Flag -->
@@ -88,12 +87,11 @@
                   <% end %>
 
                   <%= link_to switch_language_path(:pt), data: { "turbo-method": :patch, action: "click->language#selectLanguage" }, class: "language-option #{'active' if I18n.locale == :pt}" do %>
-                    <svg class="flag-icon" viewBox="0 0 30 20">
-                      <rect width="30" height="20" fill="#009739"/>
-                      <path d="M12 10 L2 2 L2 18 Z" fill="#FEDE00"/>
-                      <circle cx="12" cy="10" r="3.5" fill="#012169"/>
-                      <path d="M12 6.5 A3.5 3.5 0 0 1 12 13.5 A3 3 0 0 0 12 6.5 Z" fill="#FEDE00"/>
-                      <circle cx="12" cy="10" r="2.5" fill="transparent" stroke="#012169" stroke-width="0.5"/>
+                    <svg class="flag-icon" viewBox="0 0 20 14">
+                      <rect width="20" height="14" fill="#009739"/>
+                      <path d="M10 2 L17 7 L10 12 L3 7 Z" fill="#FEDE00"/>
+                      <circle cx="10" cy="7" r="3.2" fill="#002776"/>
+                      <path d="M7.2 7 Q10 5.8 12.8 7" stroke="#FEDE00" stroke-width="0.3" fill="none"/>
                     </svg>
                     <span><%= t("language.portuguese") %></span>
                   <% end %>
