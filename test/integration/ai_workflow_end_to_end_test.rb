@@ -26,7 +26,9 @@ class AiWorkflowEndToEndTest < ActionDispatch::IntegrationTest
     assert_equal "Ready for Claude", linear_config[:label_trigger]
     
     # Step 2: N8N Configuration (from n8n-http-request-config.json)
-    n8n_config = JSON.parse(File.read(Rails.root.join('n8n-http-request-config.json')))
+    config_file = Rails.root.join('n8n-http-request-config.json')
+    assert File.exist?(config_file), "n8n config file must exist: #{config_file}"
+    n8n_config = JSON.parse(File.read(config_file))
     
     assert_equal "POST", n8n_config["method"]
     assert_includes n8n_config["url"], "github.com/repos"

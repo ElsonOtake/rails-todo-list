@@ -57,7 +57,7 @@ class LinearGithubIntegrationTest < ActionDispatch::IntegrationTest
     expected_permissions = {
       contents: "write",        # Required for creating branches and pushing
       pull_requests: "write",   # Required for creating pull requests  
-      issues: "write           # Required for adding comments to PRs
+      issues: "write"           # Required for adding comments to PRs
     }
     
     expected_permissions.each do |permission, level|

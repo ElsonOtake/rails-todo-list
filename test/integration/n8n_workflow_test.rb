@@ -2,7 +2,9 @@ require "test_helper"
 
 class N8nWorkflowTest < ActionDispatch::IntegrationTest
   def setup
-    @n8n_config = JSON.parse(File.read(Rails.root.join('n8n-http-request-config.json')))
+    config_file = Rails.root.join('n8n-http-request-config.json')
+    assert File.exist?(config_file), "n8n config file must exist: #{config_file}"
+    @n8n_config = JSON.parse(File.read(config_file))
   end
 
   test "n8n http request configuration is valid" do
